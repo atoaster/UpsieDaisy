@@ -4,8 +4,14 @@
  */
 export interface Txn {
   id: string;
-  /** Raw statement description, e.g. "NETFLIX.COM 4059xxxx" */
+  /** Display description. In Up this is user-editable after the fact. */
   description: string;
+  /**
+   * Unedited statement text as provided by the bank (Up: `rawText`), when
+   * available. Preferred over `description` for series grouping because it
+   * is immutable — a user renaming a transaction must not split a series.
+   */
+  rawText?: string | null;
   /** Signed amount in cents. Negative = money out, positive = money in. */
   amountCents: number;
   /** ISO 8601 timestamp of when the transaction was created. */
@@ -30,9 +36,12 @@ export type Direction = 'incoming' | 'outgoing';
 
 /** A detected recurring payment series: a bill, subscription or salary. */
 export interface RecurringSeries {
-  /** Stable key derived from the normalised merchant name + direction. */
+  /**
+   * Stable key derived from direction + normalised grouping text (the bank's
+   * unedited `rawText` when available, else the description).
+   */
   key: string;
-  /** Human-friendly display name (the most common raw description). */
+  /** Display name: the most recent description (users may rename in Up). */
   name: string;
   direction: Direction;
   cadence: Cadence;

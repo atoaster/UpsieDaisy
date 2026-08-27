@@ -42,8 +42,9 @@ runs build + tests on push/PR.
 
 ## How detection works (packages/core/src/detect.ts)
 
-1. Settled, non-transfer txns grouped by direction + normalised merchant name; same-day
-   charges collapse into one occurrence.
+1. Settled, non-transfer txns grouped by direction + normalised grouping text — `rawText`
+   (bank's immutable statement text) when present, else `description` (user-editable in Up).
+   Same-day charges collapse into one occurrence. Series display name = latest description.
 2. Median gap between occurrences → cadence (weekly 6–8d, fortnightly 12–16d, monthly
    26–35d, quarterly 80–100d, yearly 340–390d, else irregular). Median gap < 5d is
    everyday spending → discarded.
@@ -58,9 +59,10 @@ runs build + tests on push/PR.
 - **Transaction descriptions are user-editable in Up.** The account owner renamed a deposit
   after the fact ("Up Savings" → "Gerald (Westpac)"). Consequences: (a) descriptions are
   not immutable, so never cache detected series long-term — re-derive from fresh history;
-  (b) a mid-series rename will split a series. Likely fix, not yet implemented: prefer Up's
-  `rawText` attribute (unedited statement text, currently ignored by `upClient.ts`) as the
-  primary grouping key, falling back to `description`.
+  (b) a mid-series rename would split a series grouped by description. **Fixed 2026-08-28**:
+  grouping prefers Up's `rawText` (unedited statement text), falling back to `description`
+  when null/blank (internal transfers have null rawText). Verified live: renamed deposits
+  show description "Gerald (Westpac)" but stable rawText "GERALD MORNA".
 - **Up API surface** (verified against developer.up.com.au): accounts, attachments,
   categories, tags, transactions, ping, webhooks. **No money-movement endpoints** — only
   writes are transaction metadata (categorise/tag) and webhooks. Personal access tokens are
@@ -75,7 +77,7 @@ runs build + tests on push/PR.
 ## State / roadmap
 
 Branch `claude/up-bank-bill-tracker-8dwxzo`; no PR opened yet (owner hasn't asked to merge).
-Done: monorepo scaffold, detection engine + 9 tests, REST API, demo mode, web dashboard,
-CI, live verification. Next candidates (README roadmap): rawText-based grouping, Up
+Done: monorepo scaffold, detection engine + 11 tests, REST API, demo mode, web dashboard,
+CI, live verification, rawText-based grouping. Next candidates (README roadmap): Up
 webhooks for realtime updates, user-adjustable series (rename/merge/ignore), mobile app
 reusing core + API, bill calendar/reminders, budget envelopes.

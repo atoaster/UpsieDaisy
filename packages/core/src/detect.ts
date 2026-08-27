@@ -9,6 +9,17 @@ import { normalizeMerchant } from './normalize.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * Text used for series grouping: the bank's unedited statement text when
+ * present, otherwise the display description. Descriptions are user-editable
+ * in Up, so grouping by them alone would split a series when one occurrence
+ * is renamed.
+ */
+function groupingText(t: Txn): string {
+  const raw = t.rawText?.trim();
+  return raw ? raw : t.description;
+}
+
 interface Occurrence {
   /** Midnight UTC of the occurrence day. */
   day: number;
@@ -113,7 +124,7 @@ export function detectRecurringSeries(txns: Txn[], opts: DetectOptions = {}): Re
   for (const t of txns) {
     if (!t.settled || t.isTransfer || t.amountCents === 0) continue;
     const direction: Direction = t.amountCents < 0 ? 'outgoing' : 'incoming';
-    const key = `${direction}:${normalizeMerchant(t.description)}`;
+    const key = `${direction}:${normalizeMerchant(groupingText(t))}`;
     const day = new Date(t.createdAt).setUTCHours(0, 0, 0, 0);
     let byDay = groups.get(key);
     if (!byDay) {
@@ -182,14 +193,17 @@ export function detectRecurringSeries(txns: Txn[], opts: DetectOptions = {}): Re
             ? addMonthsClamped(last.day, 12)
             : last.day + Math.round(nominalDays) * DAY_MS;
 
-    const allDescriptions = occurrences.flatMap((o) => o.descriptions);
     const allCategories = occurrences
       .flatMap((o) => o.categories)
       .filter((c): c is string => typeof c === 'string');
 
+    // Display name: the latest description, since users can rename
+    // transactions after the fact and the newest name is the intended one.
+    const lastDescriptions = last.descriptions;
+
     series.push({
       key,
-      name: mostCommon(allDescriptions) ?? allDescriptions[0],
+      name: lastDescriptions[lastDescriptions.length - 1],
       direction: key.startsWith('incoming') ? 'incoming' : 'outgoing',
       cadence,
       intervalDays: Math.round(medianGap * 10) / 10,

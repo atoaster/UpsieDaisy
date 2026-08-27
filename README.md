@@ -62,19 +62,24 @@ Amounts are integer cents. Dates are ISO 8601. All endpoints are GET.
 Implemented in `packages/core`, which is pure TypeScript with no I/O and no
 dependencies.
 
-1. Merchant normalisation strips reference numbers, dates, card masks and
+1. Series group by the bank's unedited statement text (Up: `rawText`) when
+   present, falling back to the display description. Descriptions are
+   user-editable in Up; grouping by immutable text means renaming a
+   transaction does not split its series. The series display name is the most
+   recent description.
+2. Merchant normalisation strips reference numbers, dates, card masks and
    company suffixes, so `NETFLIX.COM 4059` and `NETFLIX.COM 9911` group
    together.
-2. Settled, non-transfer transactions are grouped by direction and normalised
+3. Settled, non-transfer transactions are grouped by direction and normalised
    merchant. Same-day charges collapse into one occurrence.
-3. The median gap between occurrences classifies cadence: weekly 6–8 d,
+4. The median gap between occurrences classifies cadence: weekly 6–8 d,
    fortnightly 12–16 d, monthly 26–35 d, quarterly 80–100 d, yearly 340–390 d,
    otherwise irregular. Median gaps under 5 d are treated as everyday spending
    and discarded.
-4. Confidence (0–1) combines gap regularity (MAD-based, robust to a single
+5. Confidence (0–1) combines gap regularity (MAD-based, robust to a single
    outlier), amount consistency (weighted lightly; utility amounts vary), and
    occurrence count. Defaults: 3 occurrences minimum, 0.4 confidence minimum.
-5. Next dates are calendar-aware for monthly and longer cadences (a bill on
+6. Next dates are calendar-aware for monthly and longer cadences (a bill on
    the 31st stays on month-end). Each series carries a monthly-equivalent
    amount for comparison across cadences. Series past their predicted date are
    flagged.
@@ -114,7 +119,6 @@ NODE_USE_ENV_PROXY=1 NODE_EXTRA_CA_CERTS=/path/to/proxy-ca.crt npm run dev:serve
 
 ## ROADMAP
 
-- Group by Up's `rawText` so user-edited descriptions do not split a series
 - Up webhooks for realtime updates instead of polling
 - User adjustments: rename, merge, ignore a detected series
 - Mobile app reusing `@upsiedaisy/core` and the existing API

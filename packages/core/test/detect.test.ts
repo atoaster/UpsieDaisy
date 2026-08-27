@@ -134,6 +134,41 @@ describe('detectRecurringSeries', () => {
     expect(series[0]?.confidence ?? 0).toBeLessThan(0.4);
   });
 
+  it('groups by rawText so a user-renamed description does not split a series', () => {
+    const txns: Txn[] = [];
+    for (let m = 0; m < 6; m++) {
+      txns.push(
+        txn({
+          // renamed by the user halfway through the series
+          description: m < 3 ? 'Up Savings' : 'Gerald (Westpac)',
+          rawText: `OSKO DEPOSIT WESTPAC ${7000 + m}`,
+          amountCents: 50000,
+          createdAt: new Date(Date.UTC(2026, m, 20)).toISOString(),
+        }),
+      );
+    }
+    const series = detectRecurringSeries(txns, { now: NOW });
+    expect(series).toHaveLength(1);
+    expect(series[0].cadence).toBe('monthly');
+    expect(series[0].occurrences).toBe(6);
+    // display name follows the latest description
+    expect(series[0].name).toBe('Gerald (Westpac)');
+  });
+
+  it('falls back to description grouping when rawText is missing or blank', () => {
+    const txns = every(14, 6, '2026-01-05', (d, i) =>
+      txn({
+        description: 'GYM DIRECT DEBIT',
+        rawText: i % 2 === 0 ? null : '  ',
+        amountCents: -3500,
+        createdAt: d.toISOString(),
+      }),
+    );
+    const [s] = detectRecurringSeries(txns, { now: NOW });
+    expect(s.occurrences).toBe(6);
+    expect(s.cadence).toBe('fortnightly');
+  });
+
   it('collapses multiple same-day charges into one occurrence', () => {
     const txns = every(14, 6, '2026-01-01', (d) =>
       txn({ description: 'CHILDCARE CO', amountCents: -8000, createdAt: d.toISOString() }),

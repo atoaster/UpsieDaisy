@@ -106,6 +106,24 @@ export class MockSource implements TransactionSource {
       }
     }
 
+    // Monthly internet, renamed by the user mid-series: description changes
+    // but rawText stays stable, so it must still detect as one series.
+    for (let m = 0; m < 13; m++) {
+      const d = new Date(now);
+      d.setUTCDate(9);
+      d.setUTCMonth(d.getUTCMonth() - m);
+      if (d.getTime() > now || d.getTime() < start) continue;
+      push({
+        description: m < 4 ? 'Internet (Aussie BB)' : 'AUSSIE BROADBAND',
+        rawText: `AUSSIE BROADBAND ${Math.floor(rand() * 90000 + 10000)}`,
+        amountCents: -9_900,
+        createdAt: d.toISOString(),
+        settled: true,
+        isTransfer: false,
+        category: 'internet',
+      });
+    }
+
     // Quarterly electricity, varying amount
     for (let q = 0; q < 4; q++) {
       const ts = now - (18 + q * 91) * DAY_MS;

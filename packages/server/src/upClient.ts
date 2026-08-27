@@ -103,6 +103,7 @@ export class UpClient implements TransactionSource {
         txns.push({
           id: t.id,
           description: t.attributes.description,
+          rawText: t.attributes.rawText,
           amountCents: t.attributes.amount.valueInBaseUnits,
           createdAt: t.attributes.createdAt,
           settled: t.attributes.status === 'SETTLED',
