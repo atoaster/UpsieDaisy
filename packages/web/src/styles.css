@@ -448,6 +448,45 @@ footer {
   font-variant-numeric: tabular-nums;
 }
 
+.bucket-zone.selected {
+  border-style: solid;
+  border-color: var(--accent);
+}
+
+.breakdown-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.breakdown-head h3 {
+  margin: 0;
+}
+
+.breakdown-rows {
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+}
+
+.breakdown-rows li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.breakdown-rows li:last-child {
+  border-bottom: none;
+}
+
+.breakdown-label {
+  font-weight: 600;
+  flex: 1;
+}
+
 .undo-bar {
   display: flex;
   align-items: center;

@@ -49,6 +49,12 @@ Source resolution precedence (app.ts): `X-Up-Token` header → demo mode → env
 deliberately beats env token so `npm run demo` works with a populated `.env`. The server
 auto-loads `.env` from cwd or repo root (`loadDotEnv` in config.ts; real env wins).
 
+Bucket breakdown: clicking a bucket with no transaction armed opens a summary panel
+(count + total); Groceries additionally breaks down by supermarket chain
+(`core/src/supermarkets.ts`: Aldi/Coles/Woolworths/Costco + Other, word-boundary regex on
+rawText-else-description — `\baldi\b` correctly excludes "Aldi Mobile" top-ups, verified on
+fixture data). Computed client-side from /api/transactions; no dedicated endpoint.
+
 ## How detection works (packages/core/src/detect.ts)
 
 1. Settled, non-transfer txns grouped by direction + normalised grouping text — `rawText`

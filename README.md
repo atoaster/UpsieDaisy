@@ -98,6 +98,11 @@ store under the data directory, keyed per user by hashed token, and survive
 restarts. Assignments are local to your UpsieDaisy instance; they are not
 written back to Up. Internal transfers are excluded from categorisation.
 
+Selecting a bucket (click or tap with no transaction armed) shows its total
+and transaction count. The Groceries bucket additionally breaks spend down by
+supermarket chain — Aldi, Coles, Woolworths, Costco, and Other — matched by
+name against statement text, so store numbers and suburbs don't matter.
+
 ## MOBILE / HOME SCREEN
 
 The web app is responsive down to phone widths and installable from the

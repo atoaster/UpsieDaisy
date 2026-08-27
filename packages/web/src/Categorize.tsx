@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { supermarketBreakdown } from '@upsiedaisy/core';
 import { api, type Bucket, type TxnWithBucket } from './api';
 
 const aud = new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' });
@@ -24,6 +25,7 @@ export default function Categorize() {
   const [hoverBucket, setHoverBucket] = useState<string | null>(null);
   const [lastAction, setLastAction] = useState<LastAction | null>(null);
   const [showDone, setShowDone] = useState(false);
+  const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([api.buckets(), api.transactions()])
@@ -69,6 +71,11 @@ export default function Categorize() {
   if (error) return <div className="error">{error}</div>;
   if (txns === null) return <p className="muted">Loading transactions…</p>;
 
+  const selectedBucketLabel = buckets.find((b) => b.id === selectedBucket)?.label;
+  const selectedTxns = selectedBucket ? categorized.filter((t) => t.bucket === selectedBucket) : [];
+  const selectedTotalCents = selectedTxns.reduce((sum, t) => sum - t.amountCents, 0);
+  const chainRows = selectedBucket === 'groceries' ? supermarketBreakdown(selectedTxns) : null;
+
   return (
     <div>
       <section className="card">
@@ -89,6 +96,39 @@ export default function Categorize() {
           </div>
         )}
       </section>
+
+      {selectedBucket && (
+        <section className="card breakdown">
+          <div className="breakdown-head">
+            <h3>
+              {selectedBucketLabel}{' '}
+              <span className="muted">
+                — {selectedTxns.length} txn{selectedTxns.length === 1 ? '' : 's'},{' '}
+                {fmt(selectedTotalCents)} total
+              </span>
+            </h3>
+            <button className="secondary" onClick={() => setSelectedBucket(null)}>
+              Close
+            </button>
+          </div>
+          {chainRows && (
+            <ul className="breakdown-rows">
+              {chainRows.map((r) => (
+                <li key={r.id}>
+                  <span className="breakdown-label">{r.label}</span>
+                  <span className="muted">
+                    {r.count} txn{r.count === 1 ? '' : 's'}
+                  </span>
+                  <span className="upcoming-amount">{fmt(r.totalCents)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {selectedTxns.length === 0 && (
+            <p className="empty">Nothing assigned to this bucket yet.</p>
+          )}
+        </section>
+      )}
 
       <div className="categorize-grid">
         <section className="card txn-column">
@@ -134,7 +174,7 @@ export default function Categorize() {
           {buckets.map((b) => (
             <div
               key={b.id}
-              className={`bucket-zone${hoverBucket === b.id ? ' drag-over' : ''}${armedId ? ' armable' : ''}`}
+              className={`bucket-zone${hoverBucket === b.id ? ' drag-over' : ''}${armedId ? ' armable' : ''}${selectedBucket === b.id ? ' selected' : ''}`}
               onDragOver={(e) => {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
@@ -147,7 +187,10 @@ export default function Categorize() {
                 if (id) assign(id, b.id);
               }}
               onClick={() => {
+                // with a transaction armed a tap assigns; otherwise it opens
+                // the bucket's breakdown (e.g. Groceries by supermarket)
                 if (armedId) assign(armedId, b.id);
+                else setSelectedBucket((cur) => (cur === b.id ? null : b.id));
               }}
             >
               <span className="bucket-label">{b.label}</span>
