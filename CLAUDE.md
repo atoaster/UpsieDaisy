@@ -12,8 +12,9 @@ to solve is that banks (including Up) have terrible bill auto-discovery. Public 
   gitignored `.env` (`UP_API_TOKEN`) or a per-request `X-Up-Token` header from the client.
   Never log tokens, never write them to tracked files, never echo them in command output.
   Cache keys derived from tokens must be hashed (see `packages/server/src/cache.ts`).
-- **Keep `README.md` updated** with any user-facing or architectural change, and keep it
-  human-readable/pretty — it's the shop window of a public repo.
+- **Keep `README.md` updated** with any user-facing or architectural change. Owner's stated
+  style: pragmatic, man-page voice — no sales pitch, no marketing tone, no emoji/badges.
+  This is a tool, not a SaaS.
 - **Keep this file updated** with decisions, learnings and state as work progresses.
 - **The backend stays modular and client-agnostic** so the same API + core library can later
   power iOS/Android apps. The web app must only ever call the UpsieDaisy API, never the Up
