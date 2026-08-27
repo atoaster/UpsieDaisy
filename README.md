@@ -40,6 +40,7 @@ is gitignored; the repository never contains credentials.
 | `PORT`         | `3001`  | API server port                                  |
 | `UPSIE_DEMO`   | unset   | `1` serves deterministic synthetic data (no bank access); overrides `UP_API_TOKEN` |
 | `UPSIE_DATA_DIR` | `./data` | Directory for durable bucket assignments (gitignored) |
+| `UPSIE_FIXTURE` | unset   | Path to a local JSON fixture (`{accounts, transactions}`) served instead of a bank — for testing against real-shaped data. Keep fixtures under the gitignored `data/`; anonymise anything derived from real statements |
 
 A token may instead be supplied per-request via the `X-Up-Token` header; the
 web UI uses this, keeping the token in browser localStorage. Resolution order:

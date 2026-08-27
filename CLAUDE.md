@@ -83,6 +83,26 @@ auto-loads `.env` from cwd or repo root (`loadDotEnv` in config.ts; real env win
 - End-to-end against a fresh real account: pagination, adapter mapping, transfer exclusion
   and cold-start empty states all behave correctly (no false positives from 4 txns).
 
+## Learnings from real statement data (2026-08-28, 6-month Westpac statement, 452 txns)
+
+Owner supplied a real eStatement PDF (uploads dir only — **never commit it or its raw
+text**). An anonymised fixture was derived at `data/fixture.json` (gitignored, local only):
+names/employer replaced, digit runs ≥6 scrambled, dates uniformly shifted to end "today";
+amounts and merchant descriptions kept (owner approved). Served via `UPSIE_FIXTURE=<path>`
+(fixtureSource.ts; precedence: header → fixture → demo → env token). Regenerate with the
+statement parser approach: parse rows by leading DD/MM/YY, merge continuation lines,
+validate every row against the running balance (452/452 clean), sign = balance delta.
+
+Detection results on this data (the engine's first realistic test):
+- Correct: monthly salary (conf 0.9) — two description variants unified by normalisation;
+  broadband, electricity, health insurance, 3 small subscriptions (conf 0.9–0.95);
+  fortnightly childcare; monthly $7.5k offset-account transfer; fortnightly self-deposits.
+- Honest low confidence (0.41–0.54): groceries (Aldi/Costco weekly-ish) — the classic
+  near-cadence noise; correctly ranked at the bottom rather than suppressed.
+- Known limitation observed: the same merchant via different processors splits into two
+  series ("Eftpos … Splashs" vs "Payrix*splashs…") — processor-prefix stripping is a
+  future normalisation improvement.
+
 ## State / roadmap
 
 Branch `claude/up-bank-bill-tracker-8dwxzo`; no PR opened yet (owner hasn't asked to merge).

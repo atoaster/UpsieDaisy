@@ -11,6 +11,7 @@ import {
 import { BucketStore } from './store.js';
 import { TtlCache } from './cache.js';
 import type { Config } from './config.js';
+import { FixtureSource } from './fixtureSource.js';
 import { MockSource } from './mockSource.js';
 import { SourceError, type TransactionSource } from './source.js';
 import { UpClient } from './upClient.js';
@@ -26,13 +27,17 @@ interface SourceContext {
 
 /**
  * Resolve the transaction source for a request.
- * Precedence: X-Up-Token header (an explicit client choice) → demo mode
- * (explicitly enabled at startup, wins over a configured env token so
- * `npm run demo` behaves as demo regardless of .env) → UP_API_TOKEN env.
+ * Precedence: X-Up-Token header (an explicit client choice) → local fixture
+ * file (explicit test setup) → demo mode (explicitly enabled at startup,
+ * wins over a configured env token so `npm run demo` behaves as demo
+ * regardless of .env) → UP_API_TOKEN env.
  */
 function resolveSource(req: Request, config: Config): SourceContext {
   const headerToken = req.header('x-up-token')?.trim();
   if (headerToken) return { source: new UpClient(headerToken), cacheId: headerToken };
+  if (config.fixturePath) {
+    return { source: new FixtureSource(config.fixturePath), cacheId: `fixture:${config.fixturePath}` };
+  }
   if (config.demoMode) return { source: new MockSource(), cacheId: 'demo' };
   if (config.upToken) return { source: new UpClient(config.upToken), cacheId: config.upToken };
   throw new SourceError(

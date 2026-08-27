@@ -13,6 +13,8 @@ export interface Config {
   demoMode: boolean;
   /** Directory for durable data (bucket assignments). */
   dataDir: string;
+  /** Optional path to a local JSON fixture served instead of a bank. */
+  fixturePath: string | undefined;
 }
 
 /**
@@ -45,5 +47,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     upToken,
     demoMode: env.UPSIE_DEMO === '1' || env.UPSIE_DEMO === 'true',
     dataDir: env.UPSIE_DATA_DIR || join(process.cwd(), 'data'),
+    fixturePath: env.UPSIE_FIXTURE?.trim() || undefined,
   };
 }
