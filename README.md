@@ -56,6 +56,16 @@ npm test              # run the detection-engine test suite
 npm run build         # typecheck + build all packages
 ```
 
+### Running behind an egress proxy
+
+Node's built-in `fetch` ignores `HTTPS_PROXY` by default, so if your network forces outbound
+traffic through a proxy (corporate networks, sandboxed cloud environments), start the server
+with:
+
+```bash
+NODE_USE_ENV_PROXY=1 NODE_EXTRA_CA_CERTS=/path/to/proxy-ca.crt npm run dev:server
+```
+
 ## How bill auto-discovery works
 
 Everything lives in [`packages/core`](packages/core) and is pure, deterministic TypeScript
