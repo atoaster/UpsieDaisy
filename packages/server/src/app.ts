@@ -1,11 +1,14 @@
 import cors from 'cors';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import {
+  DEFAULT_BUCKETS,
   detectBills,
   detectIncome,
+  isValidBucketId,
   summarizeCashflow,
   type Txn,
 } from '@upsiedaisy/core';
+import { BucketStore } from './store.js';
 import { TtlCache } from './cache.js';
 import type { Config } from './config.js';
 import { MockSource } from './mockSource.js';
@@ -23,14 +26,15 @@ interface SourceContext {
 
 /**
  * Resolve the transaction source for a request.
- * Token precedence: X-Up-Token header (sent by the web/mobile client, held in
- * the client's own storage) → UP_API_TOKEN env var → demo mode if enabled.
+ * Precedence: X-Up-Token header (an explicit client choice) → demo mode
+ * (explicitly enabled at startup, wins over a configured env token so
+ * `npm run demo` behaves as demo regardless of .env) → UP_API_TOKEN env.
  */
 function resolveSource(req: Request, config: Config): SourceContext {
   const headerToken = req.header('x-up-token')?.trim();
-  const token = headerToken || config.upToken;
-  if (token) return { source: new UpClient(token), cacheId: token };
+  if (headerToken) return { source: new UpClient(headerToken), cacheId: headerToken };
   if (config.demoMode) return { source: new MockSource(), cacheId: 'demo' };
+  if (config.upToken) return { source: new UpClient(config.upToken), cacheId: config.upToken };
   throw new SourceError(
     'No Up API token configured. Set UP_API_TOKEN in the server environment, ' +
       'send an X-Up-Token header, or start the server with UPSIE_DEMO=1.',
@@ -44,6 +48,7 @@ export function createApp(config: Config): express.Express {
   app.use(express.json());
 
   const txnCache = new TtlCache<Txn[]>(TXN_CACHE_TTL_MS);
+  const bucketStore = new BucketStore(config.dataDir);
 
   const getTxns = async (ctx: SourceContext, days: number): Promise<Txn[]> => {
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
@@ -95,12 +100,39 @@ export function createApp(config: Config): express.Express {
     }),
   );
 
+  /** Transactions, each carrying its assigned bucket (or null). */
   app.get(
     '/api/transactions',
     wrap(async (req, res) => {
       const ctx = resolveSource(req, config);
       const txns = await getTxns(ctx, parseDays(req));
-      res.json({ transactions: txns });
+      const assignments = bucketStore.getAll(ctx.cacheId);
+      res.json({
+        transactions: txns.map((t) => ({ ...t, bucket: assignments[t.id] ?? null })),
+      });
+    }),
+  );
+
+  /** The available spending buckets. */
+  app.get('/api/buckets', (req, res) => {
+    res.json({ buckets: DEFAULT_BUCKETS });
+  });
+
+  /**
+   * Assign a transaction to a bucket ({"bucket": "groceries"}), or clear the
+   * assignment ({"bucket": null}). Durable across restarts; scoped per user.
+   */
+  app.post(
+    '/api/transactions/:id/bucket',
+    wrap(async (req, res) => {
+      const ctx = resolveSource(req, config);
+      const bucket = (req.body as { bucket?: string | null } | undefined)?.bucket ?? null;
+      if (bucket !== null && !isValidBucketId(bucket)) {
+        res.status(400).json({ error: `Unknown bucket: ${bucket}` });
+        return;
+      }
+      bucketStore.set(ctx.cacheId, req.params.id, bucket);
+      res.json({ ok: true, transactionId: req.params.id, bucket });
     }),
   );
 

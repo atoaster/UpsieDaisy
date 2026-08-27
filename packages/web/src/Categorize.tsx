@@ -1,0 +1,194 @@
+import { useEffect, useMemo, useState } from 'react';
+import { api, type Bucket, type TxnWithBucket } from './api';
+
+const aud = new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' });
+const fmt = (cents: number) => aud.format(cents / 100);
+
+interface LastAction {
+  id: string;
+  bucketLabel: string;
+  description: string;
+}
+
+/**
+ * One-motion categorisation: drag a transaction card onto a bucket and it is
+ * assigned and persisted immediately. Fallback for keyboard/touch: click a
+ * transaction to arm it, then click a bucket.
+ */
+export default function Categorize() {
+  const [txns, setTxns] = useState<TxnWithBucket[] | null>(null);
+  const [buckets, setBuckets] = useState<Bucket[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [armedId, setArmedId] = useState<string | null>(null);
+  const [hoverBucket, setHoverBucket] = useState<string | null>(null);
+  const [lastAction, setLastAction] = useState<LastAction | null>(null);
+  const [showDone, setShowDone] = useState(false);
+
+  useEffect(() => {
+    Promise.all([api.buckets(), api.transactions()])
+      .then(([b, t]) => {
+        setBuckets(b.buckets);
+        setTxns(t.transactions);
+      })
+      .catch((e) => setError(e instanceof Error ? e.message : String(e)));
+  }, []);
+
+  const uncategorized = useMemo(
+    () => (txns ?? []).filter((t) => t.bucket === null && !t.isTransfer),
+    [txns],
+  );
+  const categorized = useMemo(() => (txns ?? []).filter((t) => t.bucket !== null), [txns]);
+  const counts = useMemo(() => {
+    const c: Record<string, number> = {};
+    for (const t of categorized) c[t.bucket as string] = (c[t.bucket as string] ?? 0) + 1;
+    return c;
+  }, [categorized]);
+
+  const assign = (id: string, bucketId: string | null) => {
+    const txn = txns?.find((t) => t.id === id);
+    if (!txn) return;
+    const previous = txn.bucket;
+    setTxns((ts) => ts?.map((t) => (t.id === id ? { ...t, bucket: bucketId } : t)) ?? ts);
+    setArmedId(null);
+    setDragId(null);
+    setHoverBucket(null);
+    if (bucketId) {
+      const label = buckets.find((b) => b.id === bucketId)?.label ?? bucketId;
+      setLastAction({ id, bucketLabel: label, description: txn.description });
+    } else {
+      setLastAction(null);
+    }
+    api.assignBucket(id, bucketId).catch((e) => {
+      // revert the optimistic update if persistence failed
+      setTxns((ts) => ts?.map((t) => (t.id === id ? { ...t, bucket: previous } : t)) ?? ts);
+      setError(e instanceof Error ? e.message : String(e));
+    });
+  };
+
+  if (error) return <div className="error">{error}</div>;
+  if (txns === null) return <p className="muted">Loading transactions…</p>;
+
+  return (
+    <div>
+      <section className="card">
+        <h2>Categorise transactions</h2>
+        <p className="muted">
+          Drag a transaction onto a bucket — one motion, saved instantly and permanently.
+          (Or click a transaction, then a bucket.) Internal transfers are excluded.
+        </p>
+        {lastAction && (
+          <div className="undo-bar">
+            <span>
+              Moved <strong>{lastAction.description}</strong> to{' '}
+              <strong>{lastAction.bucketLabel}</strong>
+            </span>
+            <button className="secondary" onClick={() => assign(lastAction.id, null)}>
+              Undo
+            </button>
+          </div>
+        )}
+      </section>
+
+      <div className="categorize-grid">
+        <section className="card txn-column">
+          <h3>
+            Uncategorised <span className="muted">({uncategorized.length})</span>
+          </h3>
+          {uncategorized.length === 0 ? (
+            <p className="empty">
+              {txns.length === 0
+                ? 'No transactions found. Connect an account, or run the server in demo mode (npm run demo) for synthetic data.'
+                : 'Everything is categorised.'}
+            </p>
+          ) : (
+            <ul className="txn-list">
+              {uncategorized.map((t) => (
+                <li
+                  key={t.id}
+                  className={`txn-card${armedId === t.id ? ' armed' : ''}${dragId === t.id ? ' dragging' : ''}`}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('text/plain', t.id);
+                    e.dataTransfer.effectAllowed = 'move';
+                    setDragId(t.id);
+                  }}
+                  onDragEnd={() => {
+                    setDragId(null);
+                    setHoverBucket(null);
+                  }}
+                  onClick={() => setArmedId((cur) => (cur === t.id ? null : t.id))}
+                >
+                  <span className="txn-date">{t.createdAt.slice(0, 10)}</span>
+                  <span className="txn-desc">{t.description}</span>
+                  <span className={`txn-amount ${t.amountCents < 0 ? 'out' : 'in'}`}>
+                    {fmt(t.amountCents)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="bucket-column">
+          {buckets.map((b) => (
+            <div
+              key={b.id}
+              className={`bucket-zone${hoverBucket === b.id ? ' drag-over' : ''}${armedId ? ' armable' : ''}`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                setHoverBucket(b.id);
+              }}
+              onDragLeave={() => setHoverBucket((cur) => (cur === b.id ? null : cur))}
+              onDrop={(e) => {
+                e.preventDefault();
+                const id = e.dataTransfer.getData('text/plain') || dragId;
+                if (id) assign(id, b.id);
+              }}
+              onClick={() => {
+                if (armedId) assign(armedId, b.id);
+              }}
+            >
+              <span className="bucket-label">{b.label}</span>
+              <span className="bucket-count">{counts[b.id] ?? 0}</span>
+            </div>
+          ))}
+        </section>
+      </div>
+
+      {categorized.length > 0 && (
+        <section className="card">
+          <h3>
+            <button className="linklike" onClick={() => setShowDone((s) => !s)}>
+              {showDone ? '▾' : '▸'} Categorised ({categorized.length})
+            </button>
+          </h3>
+          {showDone && (
+            <ul className="txn-list">
+              {categorized.map((t) => (
+                <li key={t.id} className="txn-card done">
+                  <span className="txn-date">{t.createdAt.slice(0, 10)}</span>
+                  <span className="txn-desc">{t.description}</span>
+                  <span className="chip">
+                    {buckets.find((b) => b.id === t.bucket)?.label ?? t.bucket}
+                  </span>
+                  <span className={`txn-amount ${t.amountCents < 0 ? 'out' : 'in'}`}>
+                    {fmt(t.amountCents)}
+                  </span>
+                  <button
+                    className="unassign"
+                    title="Remove from bucket"
+                    onClick={() => assign(t.id, null)}
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+    </div>
+  );
+}

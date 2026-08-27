@@ -278,3 +278,196 @@ footer {
   margin-top: 2rem;
   text-align: center;
 }
+
+/* --- tabs --- */
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.2rem;
+}
+
+.tab {
+  background: transparent;
+  color: var(--muted);
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 0.4rem 0.8rem;
+}
+
+.tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* --- categorise view --- */
+
+.categorize-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(240px, 380px);
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .categorize-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.txn-column {
+  max-height: 70vh;
+  overflow-y: auto;
+  margin-bottom: 0;
+}
+
+.txn-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.txn-card {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 0.4rem;
+  background: var(--card);
+  cursor: grab;
+  user-select: none;
+}
+
+.txn-card.dragging {
+  opacity: 0.4;
+}
+
+.txn-card.armed {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.txn-card.done {
+  cursor: default;
+}
+
+.txn-date {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.txn-desc {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.txn-amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.txn-amount.in {
+  color: var(--green);
+}
+
+.txn-amount.out {
+  color: var(--ink);
+}
+
+.bucket-column {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  position: sticky;
+  top: 1rem;
+}
+
+.bucket-zone {
+  border: 2px dashed var(--line);
+  border-radius: 10px;
+  padding: 0.8rem 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  background: var(--card);
+  min-height: 3.2rem;
+  transition: border-color 120ms, background 120ms;
+}
+
+.bucket-zone.drag-over {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--card));
+}
+
+.bucket-zone.armable {
+  cursor: pointer;
+  border-style: solid;
+}
+
+.bucket-label {
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.bucket-count {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.05rem 0.5rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.undo-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.4rem 0.7rem;
+  background: var(--bg);
+}
+
+.chip {
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 0.05rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.unassign {
+  background: transparent;
+  color: var(--muted);
+  border: none;
+  font-size: 1rem;
+  padding: 0 0.3rem;
+  line-height: 1;
+}
+
+.linklike {
+  background: none;
+  border: none;
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 0;
+  cursor: pointer;
+}

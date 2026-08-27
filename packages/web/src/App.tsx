@@ -8,6 +8,7 @@ import {
   type Health,
   type SummaryResponse,
 } from './api';
+import Categorize from './Categorize';
 
 const aud = new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' });
 const fmt = (cents: number) => aud.format(cents / 100);
@@ -128,6 +129,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [view, setView] = useState<'dashboard' | 'categorize'>('dashboard');
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -159,6 +161,20 @@ export default function App() {
     <div className="app">
       <header>
         <h1>UpsieDaisy 🌼</h1>
+        <nav className="tabs">
+          <button
+            className={view === 'dashboard' ? 'tab active' : 'tab'}
+            onClick={() => setView('dashboard')}
+          >
+            Dashboard
+          </button>
+          <button
+            className={view === 'categorize' ? 'tab active' : 'tab'}
+            onClick={() => setView('categorize')}
+          >
+            Categorise
+          </button>
+        </nav>
         <div className="header-actions">
           {health?.demoMode && <span className="badge demo">demo data</span>}
           <button onClick={() => setShowSettings((s) => !s)} className="secondary">
@@ -174,7 +190,9 @@ export default function App() {
 
       {error && !needsToken && <div className="error">{error}</div>}
 
-      {data && (
+      {view === 'categorize' && <Categorize />}
+
+      {view === 'dashboard' && data && (
         <>
           <section className="stats">
             <div className="card stat">

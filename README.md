@@ -30,14 +30,16 @@ creation; short lifetimes are suitable for evaluation.
 ## CONFIGURATION
 
 Configuration is by environment variable, typically via a `.env` file copied
-from `.env.example`. `.env` is gitignored; the repository never contains
-credentials.
+from `.env.example` (loaded automatically at server start from the working
+directory or repo root; real environment variables take precedence). `.env`
+is gitignored; the repository never contains credentials.
 
 | Variable       | Default | Meaning                                          |
 | -------------- | ------- | ------------------------------------------------ |
 | `UP_API_TOKEN` | unset   | Up personal access token used by the server      |
 | `PORT`         | `3001`  | API server port                                  |
-| `UPSIE_DEMO`   | unset   | `1` serves deterministic synthetic data (no bank access) |
+| `UPSIE_DEMO`   | unset   | `1` serves deterministic synthetic data (no bank access); overrides `UP_API_TOKEN` |
+| `UPSIE_DATA_DIR` | `./data` | Directory for durable bucket assignments (gitignored) |
 
 A token may instead be supplied per-request via the `X-Up-Token` header; the
 web UI uses this, keeping the token in browser localStorage. Resolution order:
@@ -50,9 +52,11 @@ Amounts are integer cents. Dates are ISO 8601. All endpoints are GET.
 | Endpoint            | Returns                                                  |
 | ------------------- | -------------------------------------------------------- |
 | `/api/health`       | Liveness, demo-mode flag, whether a server token is set   |
+| `/api/buckets`      | Available spending buckets                                |
 | `/api/ping`         | Verifies the effective token against the Up API           |
 | `/api/accounts`     | Accounts with balances                                    |
-| `/api/transactions` | Transaction history (`?days=365`)                         |
+| `/api/transactions` | Transaction history with assigned buckets (`?days=365`)   |
+| `/api/transactions/:id/bucket` | POST `{"bucket": "groceries"}` assigns; `{"bucket": null}` clears |
 | `/api/bills`        | Outgoing recurring series, soonest due first (`?days=365&minConfidence=0.4`) |
 | `/api/income`       | Incoming recurring series, largest first                  |
 | `/api/summary`      | Monthly totals, surplus, upcoming (30 d) and overdue series |
@@ -83,6 +87,15 @@ dependencies.
    the 31st stays on month-end). Each series carries a monthly-equivalent
    amount for comparison across cadences. Series past their predicted date are
    flagged.
+
+## CATEGORISATION
+
+Every transaction can be assigned to a spending bucket in the web UI's
+Categorise view with a single drag onto the target bucket (click-then-click
+as a fallback for touch/keyboard). Assignments persist server-side in a JSON
+store under the data directory, keyed per user by hashed token, and survive
+restarts. Assignments are local to your UpsieDaisy instance; they are not
+written back to Up. Internal transfers are excluded from categorisation.
 
 ## ARCHITECTURE
 

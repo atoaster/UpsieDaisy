@@ -40,6 +40,15 @@ Commands: `npm install` · `npm run build` · `npm test` · `npm run dev:server`
 `npm run dev:web` · `npm run demo` (server with synthetic data). CI (`.github/workflows/ci.yml`)
 runs build + tests on push/PR.
 
+Categorisation: buckets defined in `core/src/buckets.ts` (shared with future mobile);
+assignments persisted server-side by `server/src/store.ts` (JSON per user under `data/`,
+filename = SHA-256 of token, gitignored) via `POST /api/transactions/:id/bucket`.
+`/api/transactions` merges the assigned `bucket` field in. Web `Categorize.tsx` does
+drag-into-bucket (HTML5 DnD) with click-arm fallback, optimistic updates + revert on error.
+Source resolution precedence (app.ts): `X-Up-Token` header → demo mode → env token — demo
+deliberately beats env token so `npm run demo` works with a populated `.env`. The server
+auto-loads `.env` from cwd or repo root (`loadDotEnv` in config.ts; real env wins).
+
 ## How detection works (packages/core/src/detect.ts)
 
 1. Settled, non-transfer txns grouped by direction + normalised grouping text — `rawText`
@@ -78,6 +87,8 @@ runs build + tests on push/PR.
 
 Branch `claude/up-bank-bill-tracker-8dwxzo`; no PR opened yet (owner hasn't asked to merge).
 Done: monorepo scaffold, detection engine + 11 tests, REST API, demo mode, web dashboard,
-CI, live verification, rawText-based grouping. Next candidates (README roadmap): Up
-webhooks for realtime updates, user-adjustable series (rename/merge/ignore), mobile app
-reusing core + API, bill calendar/reminders, budget envelopes.
+CI, live verification, rawText-based grouping, drag-into-bucket categorisation with durable
+per-user store (UI verified headless via Playwright: drag, click-fallback, persistence
+across reload). Next candidates (README roadmap): Up webhooks for realtime updates,
+user-adjustable series (rename/merge/ignore), mobile app reusing core + API, bill
+calendar/reminders, budget envelopes, per-bucket spending summaries.

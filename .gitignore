@@ -13,6 +13,9 @@ build/
 *.pem
 *.key
 
+# Local durable data (bucket assignments) — per-user, never committed
+data/
+
 # Logs & OS noise
 npm-debug.log*
 yarn-error.log

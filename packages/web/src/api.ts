@@ -1,4 +1,10 @@
-import type { CashflowSummary, RecurringSeries } from '@upsiedaisy/core';
+import type { Bucket, CashflowSummary, RecurringSeries, Txn } from '@upsiedaisy/core';
+
+export type { Bucket };
+
+export interface TxnWithBucket extends Txn {
+  bucket: string | null;
+}
 
 export interface Account {
   id: string;
@@ -45,11 +51,16 @@ export function setStoredToken(token: string): void {
   }
 }
 
-async function request<T>(path: string): Promise<T> {
+async function request<T>(path: string, init?: { method?: string; json?: unknown }): Promise<T> {
   const headers: Record<string, string> = {};
   const token = getStoredToken();
   if (token) headers['X-Up-Token'] = token;
-  const res = await fetch(path, { headers });
+  if (init?.json !== undefined) headers['Content-Type'] = 'application/json';
+  const res = await fetch(path, {
+    method: init?.method ?? 'GET',
+    headers,
+    body: init?.json !== undefined ? JSON.stringify(init.json) : undefined,
+  });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new Error((body as { error?: string }).error ?? `Request failed (${res.status})`);
@@ -62,4 +73,12 @@ export const api = {
   ping: () => request<{ ok: boolean; demo: boolean }>('/api/ping'),
   accounts: () => request<{ accounts: Account[] }>('/api/accounts'),
   summary: (days = 365) => request<SummaryResponse>(`/api/summary?days=${days}`),
+  transactions: (days = 365) =>
+    request<{ transactions: TxnWithBucket[] }>(`/api/transactions?days=${days}`),
+  buckets: () => request<{ buckets: Bucket[] }>('/api/buckets'),
+  assignBucket: (transactionId: string, bucket: string | null) =>
+    request<{ ok: boolean }>(`/api/transactions/${encodeURIComponent(transactionId)}/bucket`, {
+      method: 'POST',
+      json: { bucket },
+    }),
 };
