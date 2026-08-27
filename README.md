@@ -1,138 +1,150 @@
 # UpsieDaisy 🌼
 
-Bill, subscription and salary tracking for [Up Bank](https://up.com.au), built around one idea:
-**banks are bad at telling you what your recurring payments are, so UpsieDaisy figures it out
-from your transaction history instead.**
+**Your bills, found automatically.**
 
-Point it at your Up account (or run the built-in demo) and it will auto-discover your bills,
-subscriptions and salary — no manual setup, no tagging, no "add a bill" forms — then predict
-when each one is next due and what your monthly cashflow looks like.
+[![CI](https://github.com/atoaster/UpsieDaisy/actions/workflows/ci.yml/badge.svg)](https://github.com/atoaster/UpsieDaisy/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
+[![Node >= 20](https://img.shields.io/badge/node-%E2%89%A5%2020-brightgreen.svg)](https://nodejs.org)
 
-> UpsieDaisy is an independent open-source project and is not affiliated with Up or Bendigo &
+Banks — [Up](https://up.com.au) included — are surprisingly bad at telling you what your
+recurring payments are. UpsieDaisy fixes that. Point it at your Up account and it reads your
+transaction history, works out which payments are *actually* recurring, and shows you:
+
+- 🧾 **Your bills & subscriptions** — discovered automatically, no "add a bill" forms
+- 📅 **When each one is next due** — calendar-aware, so a bill on the 31st stays on month-end
+- 💰 **Your salary** and other recurring income
+- 📊 **Monthly cashflow** — income vs. bills, and what's left over
+- ⚠️ **Missed or lapsed bills** — series that skipped their predicted date
+
+No manual setup. No tagging. Just your data, read directly from your own bank via the
+official [Up API](https://developer.up.com.au/).
+
+> UpsieDaisy is an independent open-source project, not affiliated with Up or Bendigo &
 > Adelaide Bank.
 
-## Security model — no credentials in this repo, ever
+---
 
-This repository is public and contains **zero** secrets. It is designed so that it never needs
-any:
-
-- Your Up personal access token is supplied at runtime, one of two ways:
-  1. **Server-side env var** — `UP_API_TOKEN` in a local `.env` file (`.env` is gitignored;
-     only the placeholder `.env.example` is committed), or
-  2. **Per-request header** — paste the token into the web UI; it is stored only in *your
-     browser's* localStorage and sent to *your own* backend as an `X-Up-Token` header.
-- The backend holds tokens in memory only for the duration of a request, never logs them, and
-  never writes them to disk. Cache keys derived from tokens are SHA-256 hashed.
-- The browser never talks to the Up API directly — only to your own UpsieDaisy backend.
-- The Up API **cannot move money at all** — its only write operations are metadata
-  (categorising/tagging transactions) and webhook management. When generating a token you
-  also choose how long it lasts, so a short-lived token is a good fit for trying UpsieDaisy.
-  Still treat tokens like a password (they expose your full transaction history); you can
-  revoke one at any time from the Up app under Data Sharing.
-- Demo mode (`UPSIE_DEMO=1`) runs entirely on synthetic data with no bank access at all.
-
-If you fork this repo: keep `.env` out of git, and never paste a token into an issue or commit.
-
-## Quick start
-
-Requires Node.js ≥ 20.
+## Try it in 60 seconds (no bank account needed)
 
 ```bash
+git clone https://github.com/atoaster/UpsieDaisy.git
+cd UpsieDaisy
 npm install
-
-# Option A — try it instantly with synthetic demo data (no bank account needed)
-npm run demo          # API on :3001 with fake data
-npm run dev:web       # dashboard on http://localhost:5173
-
-# Option B — your real Up account
-cp .env.example .env  # then put your token in UP_API_TOKEN (or skip this and
-                      # paste the token into the web UI instead)
-npm run dev:server
-npm run dev:web
+npm run demo        # API server with a year of realistic synthetic data
+npm run dev:web     # dashboard → http://localhost:5173
 ```
 
-Get a personal access token at <https://api.up.com.au/getting_started>.
+You'll see a fully populated dashboard — rent, subscriptions, quarterly electricity, a
+fortnightly salary — all auto-discovered from the fake history by the same engine that runs
+on real data.
 
-```bash
-npm test              # run the detection-engine test suite
-npm run build         # typecheck + build all packages
-```
+## Connect your real Up account
 
-### Running behind an egress proxy
+1. Grab a personal access token from <https://api.up.com.au/getting_started>
+   (💡 you choose how long the token lasts when you create it — short is great for a trial).
+2. Either put it in a local env file…
 
-Node's built-in `fetch` ignores `HTTPS_PROXY` by default, so if your network forces outbound
-traffic through a proxy (corporate networks, sandboxed cloud environments), start the server
-with:
+   ```bash
+   cp .env.example .env    # then set UP_API_TOKEN=up:yeah:...
+   npm run dev:server
+   npm run dev:web
+   ```
 
-```bash
-NODE_USE_ENV_PROXY=1 NODE_EXTRA_CA_CERTS=/path/to/proxy-ca.crt npm run dev:server
-```
+   …or just start the servers and paste the token into the web UI, where it's stored only
+   in your own browser.
 
-## How bill auto-discovery works
+## 🔒 Security model
 
-Everything lives in [`packages/core`](packages/core) and is pure, deterministic TypeScript
-(no I/O), so it is unit-tested in isolation and reusable on any platform:
+This repo is public and is designed to **never contain a secret**:
 
-1. **Normalise merchants.** Statement descriptions vary between charges of the same biller
-   (`NETFLIX.COM 4059`, `NETFLIX.COM 9911`, `AGL RETAIL REF 8842213`). Reference numbers,
-   dates, card masks and company suffixes are stripped so charges group by their stable
-   merchant identity.
-2. **Group and collapse.** Settled, non-transfer transactions are grouped by direction +
-   normalised merchant; multiple charges on the same day collapse into one occurrence.
-3. **Classify cadence.** The median gap between occurrences maps to weekly / fortnightly /
-   monthly / quarterly / yearly (with tolerance bands — a monthly bill is 28–31 days apart
-   depending on the month). Gaps under ~5 days are treated as everyday spending, not bills.
-4. **Score confidence.** Three signals combine into a 0–1 score: gap regularity (robust MAD,
-   so one odd charge doesn't ruin a series), amount consistency (weighted gently — utility
-   bills legitimately vary), and the number of occurrences observed.
-5. **Predict.** The next date is calendar-aware (a bill charged on the 31st stays on
-   month-end) and every series gets a monthly-equivalent amount so weekly, quarterly and
-   yearly costs are comparable at a glance. Series whose predicted date has passed are
-   flagged as possibly cancelled/missed.
+| | |
+| --- | --- |
+| **Where your token lives** | A gitignored `.env` on your machine, *or* your browser's localStorage (sent per-request as an `X-Up-Token` header). Never in the repo. |
+| **What the server does with it** | Holds it in memory per-request only. Never logs it, never writes it to disk. Cache keys derived from it are SHA-256 hashed. |
+| **Who talks to your bank** | Only your own backend. The browser never contacts the Up API directly. |
+| **What a leaked token could do** | Read data + edit transaction metadata. The Up API has **no money-movement endpoints** — its only writes are categorise/tag and webhooks. Still: treat tokens like passwords, pick short lifetimes, and revoke via the Up app (Data Sharing) when done. |
+| **Demo mode** | `UPSIE_DEMO=1` — synthetic data, zero bank access. |
+
+If you fork this repo: keep `.env` out of git and never paste a token into an issue or commit.
+
+## How the auto-discovery works
+
+The engine lives in [`packages/core`](packages/core) — pure, dependency-free, deterministic
+TypeScript with a full test suite. In short:
+
+1. **Normalise merchant names.** `NETFLIX.COM 4059` and `NETFLIX.COM 9911` are the same
+   biller — reference numbers, dates, card masks and company suffixes get stripped.
+2. **Group & collapse.** Settled, non-transfer transactions group by direction + merchant;
+   multiple same-day charges count as one occurrence.
+3. **Classify the rhythm.** The median gap between occurrences maps to weekly / fortnightly /
+   monthly / quarterly / yearly, with tolerance bands. Gaps under ~5 days are everyday
+   spending, not bills.
+4. **Score confidence (0–100%).** Gap regularity (robust to one odd charge), amount
+   consistency (weighted gently — utility bills legitimately vary), and how many occurrences
+   we've seen. Every series shows its score honestly in the UI.
+5. **Predict.** Calendar-aware next-due dates, monthly-equivalent amounts so weekly and
+   yearly costs compare at a glance, and flags for series that missed their predicted date.
 
 Salary detection is the same machinery pointed at incoming transactions.
 
 ## Architecture
 
-Modular by design so the backend can later serve iOS/Android apps unchanged:
+Three packages, deliberately separated so the backend can later serve iOS/Android apps
+unchanged:
 
 ```
 packages/
-├── core/     @upsiedaisy/core    Pure TS domain logic: merchant normalisation,
-│                                 recurrence detection, cashflow summaries.
-│                                 Zero dependencies, zero I/O → reusable in a
-│                                 future React Native app or any other client.
-├── server/   @upsiedaisy/server  Express REST API. Adapts the Up API into the
-│                                 core's bank-agnostic transaction model behind a
-│                                 TransactionSource interface (a mock source
-│                                 implements the same interface for demo mode;
-│                                 another bank's adapter would slot in the same way).
-└── web/      @upsiedaisy/web     React + Vite dashboard. Talks only to the
-                                  UpsieDaisy API — one of possibly many clients.
+├── core/     Pure TS domain logic — normalisation, detection, summaries.
+│             Zero deps, zero I/O → drops straight into a future mobile app.
+├── server/   Express REST API. Up is wrapped behind a bank-agnostic
+│             TransactionSource interface; a mock source implements the same
+│             interface for demo mode. Another bank = another adapter.
+└── web/      React + Vite dashboard. Just one client of the API —
+              a mobile app would be the next.
 ```
 
 ### REST API
 
 All endpoints accept an optional `X-Up-Token` header (falling back to the server's
-`UP_API_TOKEN`, then demo mode). Amounts are integer cents; dates are ISO 8601.
+`UP_API_TOKEN`, then demo mode). Amounts are integer cents; dates ISO 8601.
 
-| Endpoint            | Description                                                        |
-| ------------------- | ------------------------------------------------------------------ |
-| `GET /api/health`   | Liveness + config status (demo mode? server token configured?)     |
-| `GET /api/ping`     | Verifies the effective token against the Up API                    |
-| `GET /api/accounts` | Accounts with balances                                             |
-| `GET /api/transactions` | Raw transactions (`?days=365`)                                 |
-| `GET /api/bills`    | Auto-discovered bills & subscriptions, soonest due first (`?days=365&minConfidence=0.4`) |
-| `GET /api/income`   | Auto-discovered salary / recurring income                          |
-| `GET /api/summary`  | Monthly totals, surplus, upcoming (30 days) and overdue bills      |
+| Endpoint | What you get |
+| --- | --- |
+| `GET /api/health` | Liveness + config status |
+| `GET /api/ping` | Verifies the token against the Up API |
+| `GET /api/accounts` | Accounts with balances |
+| `GET /api/transactions?days=365` | Raw transaction history |
+| `GET /api/bills?minConfidence=0.4` | Auto-discovered bills, soonest due first |
+| `GET /api/income` | Auto-discovered recurring income |
+| `GET /api/summary` | Monthly totals, surplus, upcoming & overdue bills |
+
+## Development
+
+```bash
+npm test          # detection-engine test suite (vitest)
+npm run build     # typecheck + build all packages
+```
+
+<details>
+<summary>Running behind an egress proxy</summary>
+
+Node's built-in `fetch` ignores `HTTPS_PROXY` by default. If your network forces outbound
+traffic through a proxy:
+
+```bash
+NODE_USE_ENV_PROXY=1 NODE_EXTRA_CA_CERTS=/path/to/proxy-ca.crt npm run dev:server
+```
+
+</details>
 
 ## Roadmap
 
-- [ ] Mobile app (React Native / Expo) reusing `@upsiedaisy/core` and the same REST API
-- [ ] Up webhook support for realtime updates instead of polling
-- [ ] User-adjustable series (rename, merge, ignore a detected series)
-- [ ] Bill calendar view & push reminders before due dates
-- [ ] Budget envelopes fed by detected surplus
+- [ ] Group by Up's `rawText` (unedited statement text) so user-renamed transactions don't split a series
+- [ ] 📱 Mobile app (React Native / Expo) reusing `@upsiedaisy/core` and the same REST API
+- [ ] 🔔 Up webhook support — realtime updates instead of polling
+- [ ] ✏️ User-adjustable series: rename, merge, or ignore a detected bill
+- [ ] 🗓️ Bill calendar view & reminders before due dates
+- [ ] 💸 Budget envelopes fed by detected surplus
 
 ## License
 
