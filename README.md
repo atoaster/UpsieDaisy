@@ -24,9 +24,11 @@ any:
 - The backend holds tokens in memory only for the duration of a request, never logs them, and
   never writes them to disk. Cache keys derived from tokens are SHA-256 hashed.
 - The browser never talks to the Up API directly — only to your own UpsieDaisy backend.
-- Up tokens are **read-scoped for most data but can initiate transfers between your own Up
-  accounts**, so treat them like a password. You can revoke a token at any time from the Up
-  app.
+- The Up API **cannot move money at all** — its only write operations are metadata
+  (categorising/tagging transactions) and webhook management. When generating a token you
+  also choose how long it lasts, so a short-lived token is a good fit for trying UpsieDaisy.
+  Still treat tokens like a password (they expose your full transaction history); you can
+  revoke one at any time from the Up app under Data Sharing.
 - Demo mode (`UPSIE_DEMO=1`) runs entirely on synthetic data with no bank access at all.
 
 If you fork this repo: keep `.env` out of git, and never paste a token into an issue or commit.
