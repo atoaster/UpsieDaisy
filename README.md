@@ -98,6 +98,19 @@ store under the data directory, keyed per user by hashed token, and survive
 restarts. Assignments are local to your UpsieDaisy instance; they are not
 written back to Up. Internal transfers are excluded from categorisation.
 
+## MOBILE / HOME SCREEN
+
+The web app is responsive down to phone widths and installable from the
+browser (iOS Safari: Share, then "Add to Home Screen"). It then runs
+standalone — no browser chrome — using the included web app manifest, icons
+and safe-area handling. On touch screens, categorisation is tap-transaction
+then tap-bucket; the bucket bar stays pinned while the list scrolls. No
+service worker is included: the app requires its backend anyway, and iOS
+installation does not need one.
+
+This is an interim mobile story; a native app reusing `@upsiedaisy/core` and
+the same REST API remains on the roadmap.
+
 ## ARCHITECTURE
 
 npm-workspaces monorepo. The backend is client-agnostic so the same API and

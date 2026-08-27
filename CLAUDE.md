@@ -109,6 +109,10 @@ Branch `claude/up-bank-bill-tracker-8dwxzo`; no PR opened yet (owner hasn't aske
 Done: monorepo scaffold, detection engine + 11 tests, REST API, demo mode, web dashboard,
 CI, live verification, rawText-based grouping, drag-into-bucket categorisation with durable
 per-user store (UI verified headless via Playwright: drag, click-fallback, persistence
-across reload). Next candidates (README roadmap): Up webhooks for realtime updates,
-user-adjustable series (rename/merge/ignore), mobile app reusing core + API, bill
-calendar/reminders, budget envelopes, per-bucket spending summaries.
+across reload), iOS add-to-home-screen support (manifest + icons in `web/public/`,
+safe-area/viewport-fit, phone layout with sticky tap-to-assign bucket bar ≤720px; PNG icons
+generated from `favicon.svg` via headless Chromium screenshots; verified with Playwright
+iPhone emulation — no horizontal overflow, tap-assign works, bar stays pinned).
+Next candidates (README roadmap): Up webhooks for realtime updates, user-adjustable series
+(rename/merge/ignore), mobile app reusing core + API, bill calendar/reminders, budget
+envelopes, per-bucket spending summaries.

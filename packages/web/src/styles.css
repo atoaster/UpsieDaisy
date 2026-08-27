@@ -28,16 +28,31 @@
   box-sizing: border-box;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
+  -webkit-tap-highlight-color: transparent;
 }
 
+/* Safe-area padding keeps content clear of the notch / home indicator when
+   launched standalone from the iOS home screen (black-translucent bar). */
 .app {
   max-width: 1080px;
   margin: 0 auto;
-  padding: 1.5rem 1rem 3rem;
+  padding: calc(1.5rem + env(safe-area-inset-top, 0px)) calc(1rem + env(safe-area-inset-right, 0px))
+    calc(3rem + env(safe-area-inset-bottom, 0px)) calc(1rem + env(safe-area-inset-left, 0px));
+}
+
+button,
+.txn-card,
+.bucket-zone,
+.tab {
+  touch-action: manipulation; /* no double-tap zoom delay on touch */
 }
 
 header {
@@ -265,6 +280,7 @@ tr.overdue td {
   background: var(--bg);
   color: var(--ink);
   margin-right: 0.5rem;
+  font-size: 1rem; /* ≥16px stops iOS Safari zooming the page on focus */
 }
 
 .token-card form {
@@ -470,4 +486,83 @@ footer {
   font-size: 1rem;
   padding: 0;
   cursor: pointer;
+}
+
+/* --- phone layout (iOS add-to-home-screen and small screens) --- */
+
+@media (max-width: 640px) {
+  header {
+    row-gap: 0.6rem;
+  }
+
+  h1 {
+    font-size: 1.3rem;
+  }
+
+  /* Title and actions share the first row; tabs drop to a full-width
+     segmented control underneath. */
+  .tabs {
+    order: 3;
+    width: 100%;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 0.8rem 0.5rem; /* ≥44px touch target */
+  }
+
+  .header-actions button {
+    padding: 0.55rem 0.8rem;
+  }
+
+  .stat-value {
+    font-size: 1.3rem;
+  }
+
+  th,
+  td {
+    padding: 0.45rem 0.5rem;
+  }
+}
+
+@media (max-width: 720px) {
+  /* Buckets become a sticky, horizontally scrollable bar above the list so a
+     tapped transaction can be dropped in a bucket without scrolling: tap the
+     transaction, tap the bucket. */
+  .bucket-column {
+    order: -1;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 0.4rem;
+    padding: 0.5rem 0;
+    background: var(--bg);
+    box-shadow: 0 6px 8px -6px rgba(0, 0, 0, 0.25);
+  }
+
+  .bucket-zone {
+    flex: 0 0 auto;
+    min-width: 7.5rem;
+    min-height: 44px;
+    padding: 0.5rem 0.65rem;
+  }
+
+  .txn-column {
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  .txn-card {
+    padding: 0.65rem 0.6rem; /* comfortable touch target */
+    flex-wrap: wrap;
+  }
+
+  .txn-desc {
+    white-space: normal;
+    flex-basis: 100%;
+    order: -1;
+  }
 }
