@@ -1,0 +1,21 @@
+{
+  "name": "upsiedaisy",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Bill, payment and salary tracking for Up Bank, with proper recurring-payment auto-discovery",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @upsiedaisy/core && npm run build -w @upsiedaisy/server && npm run build -w @upsiedaisy/web",
+    "test": "npm run test -w @upsiedaisy/core",
+    "dev:server": "npm run dev -w @upsiedaisy/server",
+    "dev:web": "npm run dev -w @upsiedaisy/web",
+    "demo": "UPSIE_DEMO=1 npm run dev -w @upsiedaisy/server",
+    "start": "npm run start -w @upsiedaisy/server"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Builds
+dist/
+build/
+*.tsbuildinfo
+
+# Environment / secrets — NEVER commit credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Logs & OS noise
+npm-debug.log*
+yarn-error.log
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Test output
+coverage/
