@@ -433,9 +433,38 @@ footer {
   border-style: solid;
 }
 
+.bucket-name {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.bucket-name .icon {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
 .bucket-label {
   font-weight: 600;
   font-size: 0.88rem;
+}
+
+.breakdown-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.breakdown-rows .icon {
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 .bucket-count {

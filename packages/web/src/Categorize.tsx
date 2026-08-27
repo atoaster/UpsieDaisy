@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supermarketBreakdown } from '@upsiedaisy/core';
 import { api, type Bucket, type TxnWithBucket } from './api';
+import { BucketIcon, ChainIcon } from './icons';
 
 const aud = new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' });
 const fmt = (cents: number) => aud.format(cents / 100);
@@ -100,7 +101,8 @@ export default function Categorize() {
       {selectedBucket && (
         <section className="card breakdown">
           <div className="breakdown-head">
-            <h3>
+            <h3 className="breakdown-title">
+              <BucketIcon id={selectedBucket} />
               {selectedBucketLabel}{' '}
               <span className="muted">
                 — {selectedTxns.length} txn{selectedTxns.length === 1 ? '' : 's'},{' '}
@@ -115,6 +117,7 @@ export default function Categorize() {
             <ul className="breakdown-rows">
               {chainRows.map((r) => (
                 <li key={r.id}>
+                  <ChainIcon id={r.id} />
                   <span className="breakdown-label">{r.label}</span>
                   <span className="muted">
                     {r.count} txn{r.count === 1 ? '' : 's'}
@@ -193,7 +196,10 @@ export default function Categorize() {
                 else setSelectedBucket((cur) => (cur === b.id ? null : b.id));
               }}
             >
-              <span className="bucket-label">{b.label}</span>
+              <span className="bucket-name">
+                <BucketIcon id={b.id} />
+                <span className="bucket-label">{b.label}</span>
+              </span>
               <span className="bucket-count">{counts[b.id] ?? 0}</span>
             </div>
           ))}
@@ -214,6 +220,7 @@ export default function Categorize() {
                   <span className="txn-date">{t.createdAt.slice(0, 10)}</span>
                   <span className="txn-desc">{t.description}</span>
                   <span className="chip">
+                    <BucketIcon id={t.bucket as string} size={12} />
                     {buckets.find((b) => b.id === t.bucket)?.label ?? t.bucket}
                   </span>
                   <span className={`txn-amount ${t.amountCents < 0 ? 'out' : 'in'}`}>

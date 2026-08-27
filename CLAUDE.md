@@ -54,6 +54,10 @@ Bucket breakdown: clicking a bucket with no transaction armed opens a summary pa
 (`core/src/supermarkets.ts`: Aldi/Coles/Woolworths/Costco + Other, word-boundary regex on
 rawText-else-description — `\baldi\b` correctly excludes "Aldi Mobile" top-ups, verified on
 fixture data). Computed client-side from /api/transactions; no dedicated endpoint.
+Icons: `web/src/icons.tsx` — stroke pictograms per bucket (currentColor, feather-style) and
+letter badges per chain. Chain badges deliberately avoid the supermarkets' brand colours
+and logos (trademark caution for a public repo); icons are presentation, so they live in
+web, not core.
 
 ## How detection works (packages/core/src/detect.ts)
 
