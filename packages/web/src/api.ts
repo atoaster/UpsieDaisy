@@ -4,6 +4,10 @@ export type { Bucket };
 
 export interface TxnWithBucket extends Txn {
   bucket: string | null;
+  /** 'manual' = user-assigned, 'auto' = rule-assigned, null = uncategorised. */
+  bucketSource: 'manual' | 'auto' | null;
+  /** For auto assignments: which rule fired. */
+  bucketReason?: string;
 }
 
 export interface Account {

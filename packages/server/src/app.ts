@@ -1,6 +1,7 @@
 import cors from 'cors';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import {
+  autoBucket,
   DEFAULT_BUCKETS,
   detectBills,
   detectIncome,
@@ -105,7 +106,11 @@ export function createApp(config: Config): express.Express {
     }),
   );
 
-  /** Transactions, each carrying its assigned bucket (or null). */
+  /**
+   * Transactions, each carrying its bucket and how it was assigned:
+   * a manual assignment wins; otherwise obvious cases are auto-bucketed
+   * (bucketSource 'auto'); an explicit unassign pins uncategorised.
+   */
   app.get(
     '/api/transactions',
     wrap(async (req, res) => {
@@ -113,7 +118,16 @@ export function createApp(config: Config): express.Express {
       const txns = await getTxns(ctx, parseDays(req));
       const assignments = bucketStore.getAll(ctx.cacheId);
       res.json({
-        transactions: txns.map((t) => ({ ...t, bucket: assignments[t.id] ?? null })),
+        transactions: txns.map((t) => {
+          const manual = assignments[t.id];
+          if (manual !== undefined) {
+            return { ...t, bucket: manual || null, bucketSource: manual ? 'manual' : null };
+          }
+          const auto = autoBucket(t);
+          return auto
+            ? { ...t, bucket: auto.bucket, bucketSource: 'auto', bucketReason: auto.reason }
+            : { ...t, bucket: null, bucketSource: null };
+        }),
       });
     }),
   );

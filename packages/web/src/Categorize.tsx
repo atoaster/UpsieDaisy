@@ -52,7 +52,15 @@ export default function Categorize() {
     const txn = txns?.find((t) => t.id === id);
     if (!txn) return;
     const previous = txn.bucket;
-    setTxns((ts) => ts?.map((t) => (t.id === id ? { ...t, bucket: bucketId } : t)) ?? ts);
+    const previousSource = txn.bucketSource;
+    setTxns(
+      (ts) =>
+        ts?.map((t) =>
+          t.id === id
+            ? { ...t, bucket: bucketId, bucketSource: bucketId ? ('manual' as const) : null }
+            : t,
+        ) ?? ts,
+    );
     setArmedId(null);
     setDragId(null);
     setHoverBucket(null);
@@ -64,7 +72,12 @@ export default function Categorize() {
     }
     api.assignBucket(id, bucketId).catch((e) => {
       // revert the optimistic update if persistence failed
-      setTxns((ts) => ts?.map((t) => (t.id === id ? { ...t, bucket: previous } : t)) ?? ts);
+      setTxns(
+        (ts) =>
+          ts?.map((t) =>
+            t.id === id ? { ...t, bucket: previous, bucketSource: previousSource } : t,
+          ) ?? ts,
+      );
       setError(e instanceof Error ? e.message : String(e));
     });
   };
@@ -83,7 +96,9 @@ export default function Categorize() {
         <h2>Categorise transactions</h2>
         <p className="muted">
           Drag a transaction onto a bucket — one motion, saved instantly and permanently.
-          (Or click a transaction, then a bucket.) Internal transfers are excluded.
+          (Or click a transaction, then a bucket.) Obvious merchants are categorised
+          automatically (dashed chips); drag or × to correct them. Internal transfers are
+          excluded.
         </p>
         {lastAction && (
           <div className="undo-bar">
@@ -210,7 +225,11 @@ export default function Categorize() {
         <section className="card">
           <h3>
             <button className="linklike" onClick={() => setShowDone((s) => !s)}>
-              {showDone ? '▾' : '▸'} Categorised ({categorized.length})
+              {showDone ? '▾' : '▸'} Categorised ({categorized.length}
+              {categorized.some((t) => t.bucketSource === 'auto')
+                ? `, ${categorized.filter((t) => t.bucketSource === 'auto').length} auto`
+                : ''}
+              )
             </button>
           </h3>
           {showDone && (
@@ -219,9 +238,17 @@ export default function Categorize() {
                 <li key={t.id} className="txn-card done">
                   <span className="txn-date">{t.createdAt.slice(0, 10)}</span>
                   <span className="txn-desc">{t.description}</span>
-                  <span className="chip">
+                  <span
+                    className={t.bucketSource === 'auto' ? 'chip chip-auto' : 'chip'}
+                    title={
+                      t.bucketSource === 'auto'
+                        ? `Categorised automatically (${t.bucketReason ?? 'rule'}) — drag or × to change`
+                        : undefined
+                    }
+                  >
                     <BucketIcon id={t.bucket as string} size={12} />
                     {buckets.find((b) => b.id === t.bucket)?.label ?? t.bucket}
+                    {t.bucketSource === 'auto' ? ' · auto' : ''}
                   </span>
                   <span className={`txn-amount ${t.amountCents < 0 ? 'out' : 'in'}`}>
                     {fmt(t.amountCents)}

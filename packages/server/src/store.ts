@@ -2,7 +2,10 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-/** txnId → bucketId */
+/**
+ * txnId → bucketId. An empty string means "explicitly uncategorised": the
+ * user removed an assignment, so automatic categorisation must not re-apply.
+ */
 export type Assignments = Record<string, string>;
 
 /**
@@ -27,11 +30,13 @@ export class BucketStore {
     }
   }
 
-  /** Assign a bucket, or clear the assignment when bucket is null. */
+  /**
+   * Assign a bucket; null pins the transaction as explicitly uncategorised
+   * (stored as '') so auto-categorisation does not immediately re-apply.
+   */
   set(userKey: string, txnId: string, bucket: string | null): Assignments {
     const all = this.getAll(userKey);
-    if (bucket === null) delete all[txnId];
-    else all[txnId] = bucket;
+    all[txnId] = bucket ?? '';
     mkdirSync(this.dir, { recursive: true });
     const file = this.fileFor(userKey);
     const tmp = `${file}.tmp`;

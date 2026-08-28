@@ -49,6 +49,14 @@ Source resolution precedence (app.ts): `X-Up-Token` header → demo mode → env
 deliberately beats env token so `npm run demo` works with a populated `.env`. The server
 auto-loads `.env` from cwd or repo root (`loadDotEnv` in config.ts; real env wins).
 
+Auto-categorisation (`core/src/autoBucket.ts`): bank category → bucket map (conservative;
+ambiguous categories like gifts/travel/games deliberately unmapped), then merchant patterns
+(supermarkets via classifySupermarket, fast food, streaming). Server merges at read time:
+manual assignment (store) wins → auto → null; store value '' = user pinned uncategorised
+(unassign stores '', not delete, so auto won't re-apply). `/api/transactions` returns
+`bucketSource` ('manual'|'auto'|null) + `bucketReason`. Verified live: real McDonald's txn
+auto-bucketed eating-out via bank-category:takeaway; fixture: 138/452 auto (123 groceries).
+
 Bucket breakdown: clicking a bucket with no transaction armed opens a summary panel
 (count + total); Groceries additionally breaks down by supermarket chain
 (`core/src/supermarkets.ts`: Aldi/Coles/Woolworths/Costco + Other, word-boundary regex on

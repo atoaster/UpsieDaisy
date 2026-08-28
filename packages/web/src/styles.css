@@ -467,6 +467,11 @@ footer {
   gap: 0.3rem;
 }
 
+.chip-auto {
+  background: transparent;
+  border: 1px dashed var(--accent);
+}
+
 .bucket-count {
   background: var(--bg);
   border: 1px solid var(--line);

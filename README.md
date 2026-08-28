@@ -98,6 +98,15 @@ store under the data directory, keyed per user by hashed token, and survive
 restarts. Assignments are local to your UpsieDaisy instance; they are not
 written back to Up. Internal transfers are excluded from categorisation.
 
+Unmistakable transactions are categorised automatically: the bank's own
+category (Up categorises most card purchases) is mapped conservatively onto
+buckets — takeaway to eating out, fuel to transport, and so on — and merchant
+patterns catch supermarket chains, major fast-food and streaming services.
+Ambiguous categories are deliberately not mapped. Auto assignments are shown
+with a dashed "auto" chip and are only a fallback: a manual assignment always
+wins, and removing one pins the transaction as uncategorised so the rule does
+not re-apply.
+
 Selecting a bucket (click or tap with no transaction armed) shows its total
 and transaction count. The Groceries bucket additionally breaks spend down by
 supermarket chain — Aldi, Coles, Woolworths, Costco, and Other — matched by
