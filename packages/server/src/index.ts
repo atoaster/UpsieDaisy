@@ -1,6 +1,9 @@
 import { createApp } from './app.js';
 import { loadConfig, loadDotEnv } from './config.js';
 
+// `--demo` flag as a cross-platform alternative to UPSIE_DEMO=1 (Windows
+// shells don't support the VAR=x command prefix).
+if (process.argv.includes('--demo')) process.env.UPSIE_DEMO = '1';
 loadDotEnv();
 const config = loadConfig();
 const app = createApp(config);

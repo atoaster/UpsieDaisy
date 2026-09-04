@@ -7,7 +7,7 @@ cashflow. Not affiliated with Up or Bendigo & Adelaide Bank.
 ## SYNOPSIS
 
 ```
-npm install
+npm install           # also compiles @upsiedaisy/core (prepare script)
 npm run demo          # server on :3001 with synthetic data, no token needed
 npm run dev:server    # server on :3001 against the Up API
 npm run dev:web       # dashboard on :5173, proxies /api to :3001
@@ -26,6 +26,13 @@ are detected by the same mechanism; salary is an incoming series.
 Requires Node >= 20 and an Up personal access token
 (<https://api.up.com.au/getting_started>). Token lifetime is chosen at
 creation; short lifetimes are suitable for evaluation.
+
+The dev servers import `@upsiedaisy/core` from its compiled `dist/`, which
+`npm install` builds automatically (core's `prepare` script). If a dev server
+reports `@upsiedaisy/core/dist` missing, run `npm run build -w
+@upsiedaisy/core` once. Scripts avoid Unix-only env syntax and work on
+Windows; `npm run demo` passes a `--demo` flag (equivalent to `UPSIE_DEMO=1`
+in `.env`).
 
 ## CONFIGURATION
 

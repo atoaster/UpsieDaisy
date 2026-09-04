@@ -143,6 +143,19 @@ Detection results on this data (the engine's first realistic test):
   series ("Eftpos … Splashs" vs "Payrix*splashs…") — processor-prefix stripping is a
   future normalisation improvement.
 
+## Learnings from owner's first local run (2026-09-05, Windows/PowerShell)
+
+- Fresh clones broke on `npm run dev:server`: server/web import core's compiled `dist/`,
+  which only my container had built. Fixed: `prepare` script in core's package.json — npm
+  workspaces run it on root `npm install` (verified by deleting dist + reinstalling).
+- Windows: `VAR=1 npm run …` script syntax doesn't work in cmd/PowerShell. `npm run demo`
+  now passes a `--demo` argv flag handled in server index.ts; keep future scripts free of
+  Unix-only env prefixes. PowerShell also blocks npm's `.ps1` shim until
+  `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser` (owner hit this; one-time fix).
+- Keep first-run instructions exact: owner also hit a partial/nested-copy state before a
+  clean `git clone` sorted it. The checkpoint after cloning is `dir`/`ls` showing
+  package.json at the repo root.
+
 ## State / roadmap
 
 Branch `claude/up-bank-bill-tracker-8dwxzo`; no PR opened yet (owner hasn't asked to merge).

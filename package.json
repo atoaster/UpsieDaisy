@@ -12,7 +12,7 @@
     "test": "npm run test -w @upsiedaisy/core",
     "dev:server": "npm run dev -w @upsiedaisy/server",
     "dev:web": "npm run dev -w @upsiedaisy/web",
-    "demo": "UPSIE_DEMO=1 npm run dev -w @upsiedaisy/server",
+    "demo": "npm run dev -w @upsiedaisy/server -- --demo",
     "start": "npm run start -w @upsiedaisy/server"
   },
   "engines": {
