@@ -52,7 +52,8 @@ export class MockSource implements TransactionSource {
     const start = now - 365 * DAY_MS;
     const txns: Txn[] = [];
     let id = 0;
-    const push = (t: Omit<Txn, 'id'>) => txns.push({ id: `demo-${id++}`, ...t });
+    const push = (t: Omit<Txn, 'id'>) =>
+      txns.push({ id: `demo-${id++}`, accountId: 'demo-spending', ...t });
 
     // Fortnightly salary
     for (let ts = start + 4 * DAY_MS; ts < now; ts += 14 * DAY_MS) {
@@ -148,7 +149,8 @@ export class MockSource implements TransactionSource {
       category: 'car',
     });
 
-    // Weekly savings transfer (must be excluded from bills)
+    // Weekly savings transfer (must be excluded from bills); both sides of
+    // the transfer, so saver-side deposits exist for interest activation.
     for (let ts = start + 6 * DAY_MS; ts < now; ts += 7 * DAY_MS) {
       push({
         description: 'Transfer to 🏠 House Deposit',
@@ -157,6 +159,32 @@ export class MockSource implements TransactionSource {
         settled: true,
         isTransfer: true,
         category: null,
+      });
+      push({
+        description: 'Transfer from Spending',
+        amountCents: 40_000,
+        createdAt: new Date(ts).toISOString(),
+        settled: true,
+        isTransfer: true,
+        category: null,
+        accountId: 'demo-saver',
+      });
+    }
+
+    // Monthly interest credit on the saver
+    for (let m = 0; m < 13; m++) {
+      const d = new Date(now);
+      d.setUTCDate(1);
+      d.setUTCMonth(d.getUTCMonth() - m);
+      if (d.getTime() > now || d.getTime() < start) continue;
+      push({
+        description: 'Interest',
+        amountCents: Math.round(9_000 + rand() * 2_500),
+        createdAt: d.toISOString(),
+        settled: true,
+        isTransfer: false,
+        category: null,
+        accountId: 'demo-saver',
       });
     }
 

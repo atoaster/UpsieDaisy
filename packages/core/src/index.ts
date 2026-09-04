@@ -5,6 +5,12 @@ export { summarizeCashflow, type CashflowSummary } from './summary.js';
 export { DEFAULT_BUCKETS, isValidBucketId, type Bucket } from './buckets.js';
 export { autoBucket, type AutoBucketResult } from './autoBucket.js';
 export {
+  saverInterestStatus,
+  type AccountLike,
+  type InterestOptions,
+  type InterestStatus,
+} from './interest.js';
+export {
   SUPERMARKET_CHAINS,
   classifySupermarket,
   supermarketBreakdown,

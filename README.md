@@ -41,6 +41,7 @@ is gitignored; the repository never contains credentials.
 | `UPSIE_DEMO`   | unset   | `1` serves deterministic synthetic data (no bank access); overrides `UP_API_TOKEN` |
 | `UPSIE_DATA_DIR` | `./data` | Directory for durable bucket assignments (gitignored) |
 | `UPSIE_FIXTURE` | unset   | Path to a local JSON fixture (`{accounts, transactions}`) served instead of a bank — for testing against real-shaped data. Keep fixtures under the gitignored `data/`; anonymise anything derived from real statements |
+| `UPSIE_INTEREST_MIN_DEPOSIT_CENTS` | `10000` | Monthly saver-deposit threshold used for interest activation inference |
 
 A token may instead be supplied per-request via the `X-Up-Token` header; the
 web UI uses this, keeping the token in browser localStorage. Resolution order:
@@ -61,6 +62,7 @@ Amounts are integer cents. Dates are ISO 8601. All endpoints are GET.
 | `/api/bills`        | Outgoing recurring series, soonest due first (`?days=365&minConfidence=0.4`) |
 | `/api/income`       | Incoming recurring series, largest first                  |
 | `/api/summary`      | Monthly totals, surplus, upcoming (30 d) and overdue series |
+| `/api/interest`     | Saver interest activation status (inferred; see INTEREST)   |
 
 ## DETECTION
 
@@ -111,6 +113,22 @@ Selecting a bucket (click or tap with no transaction armed) shows its total
 and transaction count. The Groceries bucket additionally breaks spend down by
 supermarket chain — Aldi, Coles, Woolworths, Costco, and Other — matched by
 name against statement text, so store numbers and suburbs don't matter.
+
+## INTEREST
+
+The Up API exposes no "interest activated" flag (its account resource
+carries only name, type, ownership and balance), so activation is inferred
+from transaction data. Up's product rule is that interest is earned in
+months with at least $100 deposited into Savers; `/api/interest` sums
+settled credits into SAVER accounts for the current calendar month
+(transfers included, interest credits excluded) and compares against the
+threshold. The most recent "Interest" credit is reported alongside as
+ground truth for whether interest was actually paid. The threshold is a
+product term, not an API contract — override it with
+`UPSIE_INTEREST_MIN_DEPOSIT_CENTS` if Up changes the rule. Sources whose
+transactions carry no account information report the status as unknown
+rather than guessing. Months are evaluated in UTC, which may differ from
+Up's local-time month boundary by a few hours at the edges.
 
 ## MOBILE / HOME SCREEN
 

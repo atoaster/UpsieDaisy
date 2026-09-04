@@ -22,6 +22,8 @@ export interface Txn {
   isTransfer: boolean;
   /** Optional bank-provided category id, e.g. "utilities". */
   category?: string | null;
+  /** Id of the account this transaction belongs to, when the source provides it. */
+  accountId?: string | null;
 }
 
 export type Cadence =

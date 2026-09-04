@@ -3,6 +3,7 @@ import express, { type NextFunction, type Request, type Response } from 'express
 import {
   autoBucket,
   DEFAULT_BUCKETS,
+  saverInterestStatus,
   detectBills,
   detectIncome,
   isValidBucketId,
@@ -172,6 +173,29 @@ export function createApp(config: Config): express.Express {
       const ctx = resolveSource(req, config);
       const txns = await getTxns(ctx, parseDays(req));
       res.json({ income: detectIncome(txns, { minConfidence: parseMinConfidence(req) }) });
+    }),
+  );
+
+  /**
+   * Saver interest activation status, inferred from deposits into savers
+   * this calendar month plus observed interest credits (the Up API exposes
+   * no direct flag). Threshold override: UPSIE_INTEREST_MIN_DEPOSIT_CENTS.
+   */
+  app.get(
+    '/api/interest',
+    wrap(async (req, res) => {
+      const ctx = resolveSource(req, config);
+      const [accounts, txns] = await Promise.all([
+        ctx.source.getAccounts(),
+        getTxns(ctx, 70), // current month plus the last interest credit
+      ]);
+      const requiredEnv = Number(process.env.UPSIE_INTEREST_MIN_DEPOSIT_CENTS);
+      res.json({
+        interest: saverInterestStatus(accounts, txns, {
+          requiredDepositsCents:
+            Number.isFinite(requiredEnv) && requiredEnv > 0 ? requiredEnv : undefined,
+        }),
+      });
     }),
   );
 

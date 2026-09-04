@@ -31,6 +31,7 @@ interface UpTransactionResource {
     transferAccount?: unknown;
   };
   relationships: {
+    account?: { data: { id: string } | null };
     transferAccount?: { data: { id: string } | null };
     category?: { data: { id: string } | null };
   };
@@ -109,6 +110,7 @@ export class UpClient implements TransactionSource {
           settled: t.attributes.status === 'SETTLED',
           isTransfer: Boolean(t.relationships.transferAccount?.data),
           category: t.relationships.category?.data?.id ?? null,
+          accountId: t.relationships.account?.data?.id ?? null,
         });
       }
       url = page.links.next;

@@ -101,6 +101,20 @@ web, not core.
 - End-to-end against a fresh real account: pagination, adapter mapping, transfer exclusion
   and cold-start empty states all behave correctly (no false positives from 4 txns).
 
+## Interest activation (2026-09-04)
+
+Verified against developer.up.com.au: **no interest/bonus/activation fields anywhere in the
+API** (AccountResource = displayName/accountType/ownershipType/balance/createdAt only).
+Wired as inference instead (`core/src/interest.ts`, `GET /api/interest`, dashboard card):
+settled credits into SAVER accounts this UTC calendar month (transfers count, interest
+credits excluded) vs $100 threshold (Up's product rule, not an API contract — override
+`UPSIE_INTEREST_MIN_DEPOSIT_CENTS`); last "Interest" credit reported as ground truth.
+Requires per-txn `accountId` (now mapped from `relationships.account.data.id` in
+upClient); sources without it (the Westpac fixture) report activated:null/'no-account-data'
+honestly. Mock emits both sides of saver transfers + monthly interest credits.
+NOTE: mock txn ids are positional, so mock edits shift ids and orphan old demo-user bucket
+assignments in data/ — harmless for synthetic data, but don't rely on stable demo ids.
+
 ## Learnings from real statement data (2026-08-28, 6-month Westpac statement, 452 txns)
 
 Owner supplied a real eStatement PDF (uploads dir only — **never commit it or its raw
@@ -124,6 +138,9 @@ Detection results on this data (the engine's first realistic test):
 ## State / roadmap
 
 Branch `claude/up-bank-bill-tracker-8dwxzo`; no PR opened yet (owner hasn't asked to merge).
+Owner's live Up tokens are short-lived (48h) and pasted per test session into the
+gitignored `.env`; when live calls return 401 the token has expired — ask for a fresh one
+(suggest the environment-settings env var instead of chat).
 Done: monorepo scaffold, detection engine + 11 tests, REST API, demo mode, web dashboard,
 CI, live verification, rawText-based grouping, drag-into-bucket categorisation with durable
 per-user store (UI verified headless via Playwright: drag, click-fallback, persistence

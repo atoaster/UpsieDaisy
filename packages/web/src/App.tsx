@@ -6,6 +6,7 @@ import {
   setStoredToken,
   type Account,
   type Health,
+  type InterestStatus,
   type SummaryResponse,
 } from './api';
 import Categorize from './Categorize';
@@ -28,6 +29,35 @@ function dueLabel(days: number): string {
   if (days === 0) return 'due today';
   if (days === 1) return 'due tomorrow';
   return `in ${days} days`;
+}
+
+function InterestCard({ interest }: { interest: InterestStatus }) {
+  if (interest.reason === 'no-saver-accounts') return null;
+  const progress = `${fmt(interest.monthDepositsCents)} of ${fmt(interest.requiredDepositsCents)} deposited into Savers in ${interest.month}`;
+  return (
+    <section className="card interest-card">
+      <h2>Saver interest</h2>
+      {interest.activated === null ? (
+        <p className="muted">
+          Cannot determine activation — this data source has no per-account transaction info.
+        </p>
+      ) : interest.activated ? (
+        <p>
+          <span className="badge confidence-high">activated</span> {progress}.
+        </p>
+      ) : (
+        <p>
+          <span className="badge confidence-low">not activated</span> {progress}.
+        </p>
+      )}
+      <p className="muted">
+        {interest.lastInterestPayment
+          ? `Last interest credit: ${fmt(interest.lastInterestPayment.amountCents)} on ${interest.lastInterestPayment.date}.`
+          : 'No interest credit observed yet.'}{' '}
+        Inferred from transactions — the Up API has no direct activation flag.
+      </p>
+    </section>
+  );
 }
 
 function ConfidenceBadge({ value }: { value: number }) {
@@ -126,6 +156,7 @@ export default function App() {
   const [health, setHealth] = useState<Health | null>(null);
   const [data, setData] = useState<SummaryResponse | null>(null);
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [interest, setInterest] = useState<InterestStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -137,14 +168,20 @@ export default function App() {
     try {
       const h = await api.health();
       setHealth(h);
-      const [summaryRes, accountsRes] = await Promise.all([api.summary(), api.accounts()]);
+      const [summaryRes, accountsRes, interestRes] = await Promise.all([
+        api.summary(),
+        api.accounts(),
+        api.interest(),
+      ]);
       setData(summaryRes);
       setAccounts(accountsRes.accounts);
+      setInterest(interestRes.interest);
       setShowSettings(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setData(null);
       setAccounts([]);
+      setInterest(null);
     } finally {
       setLoading(false);
     }
@@ -212,6 +249,8 @@ export default function App() {
               </span>
             </div>
           </section>
+
+          {interest && <InterestCard interest={interest} />}
 
           {data.summary.upcoming.length > 0 && (
             <section className="card">

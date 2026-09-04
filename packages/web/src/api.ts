@@ -1,4 +1,6 @@
-import type { Bucket, CashflowSummary, RecurringSeries, Txn } from '@upsiedaisy/core';
+import type { Bucket, CashflowSummary, InterestStatus, RecurringSeries, Txn } from '@upsiedaisy/core';
+
+export type { InterestStatus };
 
 export type { Bucket };
 
@@ -80,6 +82,7 @@ export const api = {
   transactions: (days = 365) =>
     request<{ transactions: TxnWithBucket[] }>(`/api/transactions?days=${days}`),
   buckets: () => request<{ buckets: Bucket[] }>('/api/buckets'),
+  interest: () => request<{ interest: InterestStatus }>('/api/interest'),
   assignBucket: (transactionId: string, bucket: string | null) =>
     request<{ ok: boolean }>(`/api/transactions/${encodeURIComponent(transactionId)}/bucket`, {
       method: 'POST',
