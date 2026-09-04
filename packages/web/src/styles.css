@@ -472,6 +472,14 @@ footer {
   border: 1px dashed var(--accent);
 }
 
+.pending-mark {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.35rem;
+  color: var(--muted);
+  vertical-align: -1px;
+}
+
 .bucket-count {
   background: var(--bg);
   border: 1px solid var(--line);

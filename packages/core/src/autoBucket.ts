@@ -49,11 +49,9 @@ const BANK_CATEGORY_TO_BUCKET: Record<string, string> = {
   // health
   'health-and-medical': 'health',
   'fitness-and-wellbeing': 'health',
-  // shopping
-  'clothing-and-accessories': 'shopping',
-  'homeware-and-appliances': 'shopping',
-  technology: 'shopping',
-  'games-and-software': 'shopping',
+  // entertainment
+  'games-and-software': 'entertainment',
+  'events-and-gigs': 'entertainment',
 };
 
 const MERCHANT_RULES: Array<{ pattern: RegExp; bucket: string; name: string }> = [
@@ -78,7 +76,9 @@ const MERCHANT_RULES: Array<{ pattern: RegExp; bucket: string; name: string }> =
 
 /** The automatic bucket for a transaction, or null when nothing is obvious. */
 export function autoBucket(t: Txn): AutoBucketResult | null {
-  if (!t.settled || t.isTransfer) return null;
+  // Pending (HELD) transactions are treated as final — card holds almost
+  // always settle, and waiting for settlement is just an annoying delay.
+  if (t.isTransfer) return null;
 
   if (t.category) {
     const bucket = BANK_CATEGORY_TO_BUCKET[t.category];

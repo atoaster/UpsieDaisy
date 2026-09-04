@@ -7,7 +7,7 @@ import type { Txn } from './types.js';
  * developer.up.com.au: AccountResource has only name/type/ownership/balance).
  * Up's product rule is that interest is earned in months where at least
  * $100 is deposited into Savers, so activation is computed from observable
- * data instead: settled credits into SAVER accounts this calendar month,
+ * data instead: credits into SAVER accounts this calendar month,
  * with actual "Interest" credit transactions reported as ground truth for
  * whether interest was recently paid. The rule is a product term, not an API
  * contract — the threshold is a parameter in case it changes.
@@ -58,7 +58,7 @@ export function saverInterestStatus(
   const saverIds = accounts.filter((a) => a.accountType === 'SAVER').map((a) => a.id);
 
   const interestPayments = txns
-    .filter((t) => t.settled && isInterestPayment(t))
+    .filter((t) => isInterestPayment(t))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const last = interestPayments[0];
   const lastInterestPayment = last
@@ -85,7 +85,6 @@ export function saverInterestStatus(
   const monthDepositsCents = txns
     .filter(
       (t) =>
-        t.settled &&
         t.amountCents > 0 &&
         t.accountId != null &&
         saverIdSet.has(t.accountId) &&

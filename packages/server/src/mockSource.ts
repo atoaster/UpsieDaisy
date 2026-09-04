@@ -188,6 +188,16 @@ export class MockSource implements TransactionSource {
       });
     }
 
+    // A pending (HELD) card authorisation from a few hours ago
+    push({
+      description: 'Sq *pop Up Market',
+      amountCents: -1_850,
+      createdAt: new Date(now - 3 * 60 * 60 * 1000).toISOString(),
+      settled: false,
+      isTransfer: false,
+      category: null,
+    });
+
     // Everyday noise: groceries and coffee at random intervals
     for (let ts = start; ts < now; ts += (1 + Math.floor(rand() * 4)) * DAY_MS) {
       push({

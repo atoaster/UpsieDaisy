@@ -21,6 +21,8 @@ describe('autoBucket', () => {
     ).toEqual({ bucket: 'eating-out', reason: 'bank-category:takeaway' });
     expect(autoBucket(txn({ category: 'fuel' }))?.bucket).toBe('transport');
     expect(autoBucket(txn({ category: 'mobile-phone' }))?.bucket).toBe('bills');
+    // shopping-ish categories are unmapped since the Shopping bucket was removed
+    expect(autoBucket(txn({ category: 'clothing-and-accessories' }))).toBeNull();
   });
 
   it('falls back to unmistakable merchant patterns', () => {
@@ -36,9 +38,9 @@ describe('autoBucket', () => {
     });
   });
 
-  it('maps games-and-software to shopping', () => {
+  it('maps games-and-software to entertainment', () => {
     expect(autoBucket(txn({ description: 'Steam', rawText: 'WL *STEAM PURCHASE', category: 'games-and-software' }))).toEqual(
-      { bucket: 'shopping', reason: 'bank-category:games-and-software' },
+      { bucket: 'entertainment', reason: 'bank-category:games-and-software' },
     );
   });
 
@@ -47,10 +49,15 @@ describe('autoBucket', () => {
     expect(autoBucket(txn({ description: 'Woolworths Petrol 123', category: 'fuel' }))?.bucket).toBe('transport');
   });
 
-  it('leaves ambiguous and non-candidate transactions alone', () => {
+  it('leaves ambiguous transactions and transfers alone', () => {
     expect(autoBucket(txn({ description: 'Some Local Shop' }))).toBeNull();
     expect(autoBucket(txn({ category: 'gifts-and-charity' }))).toBeNull();
     expect(autoBucket(txn({ description: 'Woolworths 3177', isTransfer: true }))).toBeNull();
-    expect(autoBucket(txn({ description: 'Woolworths 3177', settled: false }))).toBeNull();
+  });
+
+  it('treats pending (HELD) transactions as final', () => {
+    expect(autoBucket(txn({ description: 'Steam', category: 'games-and-software', settled: false }))?.bucket).toBe(
+      'entertainment',
+    );
   });
 });

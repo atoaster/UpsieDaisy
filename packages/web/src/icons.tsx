@@ -72,12 +72,13 @@ const BUCKET_GLYPHS: Record<string, ReactNode> = {
       <path d="M6.5 21v-3M17.5 21v-3" />
     </>
   ),
-  // shopping bag
-  shopping: (
+  // game controller
+  entertainment: (
     <>
-      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-      <path d="M3 6h18" />
-      <path d="M16 10a4 4 0 0 1-8 0" />
+      <path d="M7 8h10a5 5 0 0 1 5 5v3a3 3 0 0 1-3 3c-1.2 0-2.2-.6-3-1.5L14.5 16h-5L8 17.5c-.8.9-1.8 1.5-3 1.5a3 3 0 0 1-3-3v-3a5 5 0 0 1 5-5z" />
+      <path d="M7.5 12h3M9 10.5v3" />
+      <circle cx="16" cy="11.2" r="0.6" fill="currentColor" />
+      <circle cx="18" cy="13.2" r="0.6" fill="currentColor" />
     </>
   ),
   // medical cross
@@ -125,6 +126,26 @@ const CHAIN_BADGES: Record<string, { letters: string; color: string }> = {
   costco: { letters: 'CO', color: '#d16ba5' },
   other: { letters: '···', color: '#8a8896' },
 };
+
+/** Small clock shown next to transactions that have not settled yet. */
+export function PendingIcon({ size = 12 }: { size?: number }) {
+  return (
+    <svg
+      className="icon pending"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3.5 2" />
+    </svg>
+  );
+}
 
 export function ChainIcon({ id, size = 18 }: IconProps) {
   const badge = CHAIN_BADGES[id] ?? CHAIN_BADGES.other;

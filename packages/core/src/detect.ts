@@ -104,8 +104,9 @@ function isoDay(ms: number): string {
  * flat list of transactions.
  *
  * The approach:
- *  1. Group settled, non-transfer transactions by direction + normalised
- *     merchant name, collapsing same-day charges into single occurrences.
+ *  1. Group non-transfer transactions (pending included) by direction +
+ *     normalised merchant name, collapsing same-day charges into single
+ *     occurrences.
  *  2. For each group, look at the gaps between occurrence days and classify
  *     the cadence (weekly / fortnightly / monthly / quarterly / yearly)
  *     from the median gap.
@@ -122,7 +123,9 @@ export function detectRecurringSeries(txns: Txn[], opts: DetectOptions = {}): Re
   // Group by direction + normalised merchant, collapsing same-day charges.
   const groups = new Map<string, Map<number, Occurrence>>();
   for (const t of txns) {
-    if (!t.settled || t.isTransfer || t.amountCents === 0) continue;
+    // Pending transactions count too: holds nearly always settle, and a bill
+    // charged yesterday should update the series without waiting.
+    if (t.isTransfer || t.amountCents === 0) continue;
     const direction: Direction = t.amountCents < 0 ? 'outgoing' : 'incoming';
     const key = `${direction}:${normalizeMerchant(groupingText(t))}`;
     const day = new Date(t.createdAt).setUTCHours(0, 0, 0, 0);

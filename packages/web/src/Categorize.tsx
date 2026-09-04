@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supermarketBreakdown } from '@upsiedaisy/core';
 import { api, type Bucket, type TxnWithBucket } from './api';
-import { BucketIcon, ChainIcon } from './icons';
+import { BucketIcon, ChainIcon, PendingIcon } from './icons';
 
 const aud = new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' });
 const fmt = (cents: number) => aud.format(cents / 100);
@@ -178,7 +178,14 @@ export default function Categorize() {
                   onClick={() => setArmedId((cur) => (cur === t.id ? null : t.id))}
                 >
                   <span className="txn-date">{t.createdAt.slice(0, 10)}</span>
-                  <span className="txn-desc">{t.description}</span>
+                  <span className="txn-desc">
+                    {t.description}
+                    {!t.settled && (
+                      <span className="pending-mark" title="Pending — not settled yet">
+                        <PendingIcon />
+                      </span>
+                    )}
+                  </span>
                   <span className={`txn-amount ${t.amountCents < 0 ? 'out' : 'in'}`}>
                     {fmt(t.amountCents)}
                   </span>
@@ -237,7 +244,14 @@ export default function Categorize() {
               {categorized.map((t) => (
                 <li key={t.id} className="txn-card done">
                   <span className="txn-date">{t.createdAt.slice(0, 10)}</span>
-                  <span className="txn-desc">{t.description}</span>
+                  <span className="txn-desc">
+                    {t.description}
+                    {!t.settled && (
+                      <span className="pending-mark" title="Pending — not settled yet">
+                        <PendingIcon />
+                      </span>
+                    )}
+                  </span>
                   <span
                     className={t.bucketSource === 'auto' ? 'chip chip-auto' : 'chip'}
                     title={

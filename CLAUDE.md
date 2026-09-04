@@ -50,11 +50,16 @@ deliberately beats env token so `npm run demo` works with a populated `.env`. Th
 auto-loads `.env` from cwd or repo root (`loadDotEnv` in config.ts; real env wins).
 
 Auto-categorisation (`core/src/autoBucket.ts`): bank category → bucket map (conservative;
-ambiguous categories like gifts/travel deliberately unmapped; games-and-software → shopping
-per owner decision 2026-09-04), then merchant patterns (supermarkets via
-classifySupermarket, fast food, streaming, ORDERNOW* food-ordering prefix → eating-out).
-Only settled txns are auto-bucketed — HELD card authorisations stay uncategorised until
-they settle (observed live: pending Steam purchases), then flip automatically. Server merges at read time:
+ambiguous categories like gifts/travel/clothing/homeware/tech deliberately unmapped), then
+merchant patterns (supermarkets via classifySupermarket, fast food, streaming, ORDERNOW*
+food-ordering prefix → eating-out).
+Owner decisions 2026-09-04: Shopping bucket REMOVED as redundant (its bank-category
+mappings dropped, not remapped); Entertainment & gaming bucket added — games-and-software
+and events-and-gigs map there (Steam verified live). Pending (HELD) transactions are
+treated as FINAL everywhere (autoBucket, detection, interest) — owner finds waiting for
+settlement annoying and holds nearly always settle; the UI shows a small clock marker
+(PendingIcon) next to unsettled txns instead. A stale local demo store assignment can
+shadow this in demo mode after mock id shifts — delete data/buckets-<sha256('demo')…>.json. Server merges at read time:
 manual assignment (store) wins → auto → null; store value '' = user pinned uncategorised
 (unassign stores '', not delete, so auto won't re-apply). `/api/transactions` returns
 `bucketSource` ('manual'|'auto'|null) + `bucketReason`. Verified live: real McDonald's txn

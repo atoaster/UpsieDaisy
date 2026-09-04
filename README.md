@@ -77,8 +77,9 @@ dependencies.
 2. Merchant normalisation strips reference numbers, dates, card masks and
    company suffixes, so `NETFLIX.COM 4059` and `NETFLIX.COM 9911` group
    together.
-3. Settled, non-transfer transactions are grouped by direction and normalised
-   merchant. Same-day charges collapse into one occurrence.
+3. Non-transfer transactions are grouped by direction and normalised
+   merchant; same-day charges collapse into one occurrence. Pending (held)
+   transactions are treated as final — card holds nearly always settle.
 4. The median gap between occurrences classifies cadence: weekly 6–8 d,
    fortnightly 12–16 d, monthly 26–35 d, quarterly 80–100 d, yearly 340–390 d,
    otherwise irregular. Median gaps under 5 d are treated as everyday spending
@@ -102,9 +103,12 @@ written back to Up. Internal transfers are excluded from categorisation.
 
 Unmistakable transactions are categorised automatically: the bank's own
 category (Up categorises most card purchases) is mapped conservatively onto
-buckets — takeaway to eating out, fuel to transport, and so on — and merchant
-patterns catch supermarket chains, major fast-food and streaming services.
-Ambiguous categories are deliberately not mapped. Auto assignments are shown
+buckets — takeaway to eating out, fuel to transport, games to entertainment,
+and so on — and merchant patterns catch supermarket chains, major fast-food,
+streaming services and food-ordering platforms. Ambiguous categories are
+deliberately not mapped. Pending transactions are categorised without waiting
+for settlement and carry a small clock marker until they settle.
+Auto assignments are shown
 with a dashed "auto" chip and are only a fallback: a manual assignment always
 wins, and removing one pins the transaction as uncategorised so the rule does
 not re-apply.
@@ -120,7 +124,7 @@ The Up API exposes no "interest activated" flag (its account resource
 carries only name, type, ownership and balance), so activation is inferred
 from transaction data. Up's product rule is that interest is earned in
 months with at least $100 deposited into Savers; `/api/interest` sums
-settled credits into SAVER accounts for the current calendar month
+credits into SAVER accounts for the current calendar month
 (transfers included, interest credits excluded) and compares against the
 threshold. The most recent "Interest" credit is reported alongside as
 ground truth for whether interest was actually paid. The threshold is a

@@ -108,17 +108,24 @@ describe('detectRecurringSeries', () => {
     expect(s.cadence).toBe('quarterly');
   });
 
-  it('ignores transfers, pending and sub-weekly spending', () => {
+  it('ignores transfers and sub-weekly spending', () => {
     const transfers = every(14, 8, '2026-01-01', (d) =>
       txn({ description: 'Transfer to Savings', amountCents: -50000, createdAt: d.toISOString(), isTransfer: true }),
-    );
-    const pending = every(30, 5, '2026-01-01', (d) =>
-      txn({ description: 'GYM MEMBERSHIP', amountCents: -2500, createdAt: d.toISOString(), settled: false }),
     );
     const coffee = every(2, 40, '2026-01-01', (d, i) =>
       txn({ description: 'SOUL ORIGIN', amountCents: -520 - (i % 3) * 60, createdAt: d.toISOString() }),
     );
-    expect(detectRecurringSeries([...transfers, ...pending, ...coffee], { now: NOW })).toHaveLength(0);
+    expect(detectRecurringSeries([...transfers, ...coffee], { now: NOW })).toHaveLength(0);
+  });
+
+  it('counts pending (HELD) transactions as final', () => {
+    const gym = every(30, 5, '2026-01-01', (d) =>
+      txn({ description: 'GYM MEMBERSHIP', amountCents: -2500, createdAt: d.toISOString(), settled: false }),
+    );
+    const [s] = detectRecurringSeries(gym, { now: NOW });
+    expect(s).toBeDefined();
+    expect(s.cadence).toBe('monthly');
+    expect(s.occurrences).toBe(5);
   });
 
   it('gives erratic spending low confidence', () => {

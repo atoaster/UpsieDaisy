@@ -14,7 +14,7 @@ export const DEFAULT_BUCKETS: Bucket[] = [
   { id: 'groceries', label: 'Groceries' },
   { id: 'eating-out', label: 'Eating out' },
   { id: 'transport', label: 'Transport' },
-  { id: 'shopping', label: 'Shopping' },
+  { id: 'entertainment', label: 'Entertainment & gaming' },
   { id: 'health', label: 'Health' },
   { id: 'income', label: 'Income' },
   { id: 'savings', label: 'Savings & transfers' },
