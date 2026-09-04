@@ -30,6 +30,16 @@ describe('autoBucket', () => {
       reason: 'merchant:Woolworths',
     });
     expect(autoBucket(txn({ description: 'Paypal *spotify*p1da2d 4029357733' }))?.bucket).toBe('subscriptions');
+    expect(autoBucket(txn({ description: 'ORDERNOW* JOHNNY BOYS\\', rawText: 'ORDERNOW* JOHNNY BOYS\\' }))).toEqual({
+      bucket: 'eating-out',
+      reason: 'merchant:food ordering platform',
+    });
+  });
+
+  it('maps games-and-software to shopping', () => {
+    expect(autoBucket(txn({ description: 'Steam', rawText: 'WL *STEAM PURCHASE', category: 'games-and-software' }))).toEqual(
+      { bucket: 'shopping', reason: 'bank-category:games-and-software' },
+    );
   });
 
   it('prefers the bank category over merchant patterns', () => {

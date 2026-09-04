@@ -50,8 +50,11 @@ deliberately beats env token so `npm run demo` works with a populated `.env`. Th
 auto-loads `.env` from cwd or repo root (`loadDotEnv` in config.ts; real env wins).
 
 Auto-categorisation (`core/src/autoBucket.ts`): bank category → bucket map (conservative;
-ambiguous categories like gifts/travel/games deliberately unmapped), then merchant patterns
-(supermarkets via classifySupermarket, fast food, streaming). Server merges at read time:
+ambiguous categories like gifts/travel deliberately unmapped; games-and-software → shopping
+per owner decision 2026-09-04), then merchant patterns (supermarkets via
+classifySupermarket, fast food, streaming, ORDERNOW* food-ordering prefix → eating-out).
+Only settled txns are auto-bucketed — HELD card authorisations stay uncategorised until
+they settle (observed live: pending Steam purchases), then flip automatically. Server merges at read time:
 manual assignment (store) wins → auto → null; store value '' = user pinned uncategorised
 (unassign stores '', not delete, so auto won't re-apply). `/api/transactions` returns
 `bucketSource` ('manual'|'auto'|null) + `bucketReason`. Verified live: real McDonald's txn

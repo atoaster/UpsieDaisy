@@ -53,6 +53,7 @@ const BANK_CATEGORY_TO_BUCKET: Record<string, string> = {
   'clothing-and-accessories': 'shopping',
   'homeware-and-appliances': 'shopping',
   technology: 'shopping',
+  'games-and-software': 'shopping',
 };
 
 const MERCHANT_RULES: Array<{ pattern: RegExp; bucket: string; name: string }> = [
@@ -66,6 +67,12 @@ const MERCHANT_RULES: Array<{ pattern: RegExp; bucket: string; name: string }> =
     pattern: /\bnetflix\b|\bspotify\b|\bdisney\s*(plus|\+)|\byoutube premium\b|apple\.com\/bill/i,
     bucket: 'subscriptions',
     name: 'streaming service',
+  },
+  {
+    // online food-ordering platform prefix, e.g. "ORDERNOW* JOHNNY BOYS"
+    pattern: /\bordernow\*/i,
+    bucket: 'eating-out',
+    name: 'food ordering platform',
   },
 ];
 
